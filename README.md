@@ -4,8 +4,8 @@ This repository is used to store all the code and notes used during the DevOps B
 
 This project consists of:
 - Demo Projects
-- Notes
-- Smaller helpers/scripts used during the course
+- Notes (they were written during the course and are neither complete nor perfect)
+- Smaller helpers/scripts used during the course in the exercises
 
 ## Demo Projects
 - [10_kubernetes](https://github.com/kvn-31/twn_devops-bootcamp/tree/main/demo_projects/10_kubernets/demo_project)
