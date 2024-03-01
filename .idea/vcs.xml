@@ -2,5 +2,12 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/exercises/04_build_package_tools/java-app" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/exercises/04_build_package_tools/java-maven-app" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/exercises/04_build_package_tools/react-nodejs-example" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/exercises/05_digitalocean/java-react-example" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/exercises/06_artifacts_repository_manager/java-app" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/exercises/06_artifacts_repository_manager/java-maven-app" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/exercises/07_containers_with_docker/js-app-starter" vcs="Git" />
   </component>
 </project>

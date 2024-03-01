@@ -1,0 +1,319 @@
+# 10 - Kubernetes
+
+- real-world: applications with hundreds of containers, especially considering microservices
+- -> we need container orchestration tools
+- open-source container orchestration tool, developed by google
+- helps manage containerized applications in different deployment environments
+
+## Features
+- high availability, no downtime
+- scalability (scale up and down)
+- disaster recovery - backup + restore
+
+## Components
+- node
+    - virtual/physical machine
+- pod
+    - smallest unit in kubernetes
+    - abstraction over a container -> creates running environment/layer on top of container
+    - usually 1 application per pod
+    - each pod has its own ip address
+    - ephemeral -> can die easily -> new ip address is assigned -> this why services are needed
+    - normally no interaction with pod, but with the abstraction layer (Deployment)
+- service
+    - attached to a pod
+    - permanent ip address which can be attached to each pod
+    - does not die if the pod dies
+    - external service: opens communication from external sources
+    - internal service: for database f.e.
+    - is also a load-balancer
+- ingress
+    - does the forwarding from a request (to a domain f.e.) to the service (ip)
+- config map
+    - pods communicate with each other using services (f.e. mongo-db-service), but db url is defined in the application properties/config file/env variable -> what if the name of db service or db url needs to be changed?
+    - to solve this problem and avoid a rebuild of the application we use ConfigMap
+    - external config of application
+    - connected to pod
+    - if name of service/endpoint is changed we just change it in config map -> no rebuild is needed
+    - used inside the pod with env variables or properties file
+    - no confidential data (username pw)
+- secret
+    - is like ConfigMap, but used for secret data such as credentials
+    - important: it is not secure out of the box
+    - also connected to pod
+    - used inside the pod with env variables or properties file
+- Volumes
+    - if pod restarts, data would be gone
+    - to avoid this we use Volumes
+    - attaches a physical storage to a pod
+    - storage can be on local machine/remote/outside the cluster
+    - kubernetes does not manage data persistance!
+- Deployment
+    - kubernetes uses distributed systems
+    - -> instead of relying on one pod, everything is replicated -> if one pod fails the prod app is not down
+    - to do this: blueprint of pod is defined and specified how many replicas are needed
+    - this blueprint is called Deployment
+    - is an abstraction on top of pods
+    - container -> pods -> deployment
+- Statefulset
+    - Databases cannot be replicated because it has state (risk to have data inconsistencies)
+    - for all stateful apps (mysql, psql, ..)
+    - makes sure that db reads & writes are synchronized
+    - DBs are often hosted outside of K8s cluster
+- DaemonSet
+    - calculates how many replicas are needed based on existing nodes
+    - deploys just one replica per node
+    - adds pods if nodes are added
+    - removes pods (garbage collected) if nodes are removed
+    - no need to define replica count
+    - automatically scales up & down by number of nodes
+
+## Architecture
+
+- each node has multiple pods on it (sometimes also called worker nodes)
+- to manage: 3 processes are installed
+    - container runtime
+    - kubelet: interacts with container and node; responsible to actually start the pod with container inside
+    - kube proxy: forwards the requests from services to pods
+- different container runtimes:
+    - docker
+    - containerd (most used, more lightweight)
+    - cri-o
+- docker can run on any container runtime
+
+### Control Plane Nodes
+in order to interact with a cluster (schedule pods, monitor, re-start, join new node, ..) control plane nodes are used
+
+4 processes run on every control plane node
+
+- Api server: cluster gateway -> main entrypoint; validates requests and forwards; can be accessed via ui, api or cli (kubectl)
+- Scheduler: API server receives request to schedule a new node and sends it to scheduler; has intelligent logic where to put the node; Kubelet actually starts the pod on the node
+- Controller Manager: detects state changes (f.e. pod dies), tries to recover state; Controller Manager -> Scheduler -> Kubelet
+- etcd: Key-Value store of cluster; cluster's brain; every change in the cluster is updated in the etcd state; must be stored reliable and replicated; no application data stored here
+
+## Example cluster setup
+
+- 2 control plane nodes (more important, but need less resources)
+- 3 worker nodes
+- can be extended with growing application complexity / demand
+
+## Local Setup Minikube & kubectl
+
+### Minikube
+a whole cluster cannot be tested on local machine because of potential lack of memory/processing power -> we use minikube
+
+- is a one node cluster where control plane and worker node processes run on one node/machine
+- must start either as container or VM
+- the preferred driver is Docker
+    - means minikube runs as docker container
+    - but inside minikube the applications are also run using docker
+- setup: https://minikube.sigs.k8s.io/docs/start/ -> if docker is not installed, have look at drivers page
+- start: minikube start --driver docker
+
+### Assign external service a public ip address with minikube
+
+minikube service NAME
+
+- creates a tunnel and uses the local ip address (no real public ip address)
+
+## Kubectl
+used to interact with a cloud or Minikube cluster
+
+- cli tool for K8s cluster
+- used to talk to the api server
+
+### Kubectl commands
+```
+# create a deployment, get latest image from dockerhub
+kubectl create deployment NAME --image=IMAGE
+kubectl create X
+
+# get all elements of type
+kubectl get all
+kubectl get node
+kubectl get deployment
+kubectl get replicaset
+kubectl get pod -o wide # with more details such as ip address (handy to see if service is referencing the right pod)
+kubectl get deployment nginx-deployment -o yaml > nginx-deployment-result.yaml # save to file with auto-generated status section
+
+# update
+kubectl edit deployment NAME
+
+# delete deployment
+kubectl delete deployment NAME -> cascades, so that also the replicaset and pod are deleted
+kubectl delete -f nginx-deployment.yaml #by file
+
+# logs & information (status changes)
+kubectl logs NAME #log to console
+kubectl describe pod NAME #info about pod
+
+
+# interactive terminal inside pod
+kubectl exec -it NAME -- bin/bash
+```
+
+## Layers of Abstraction
+
+- Deployment manages a ..
+- Recplicaset manages a ..
+- Pod is an abstraction a ..
+- Container
+
+## Configuration File
+instead of writing a lot of cli commands to create deployments, we use configuration files which are executed using apply
+
+```
+kubectl apply -f FILE
+```
+Can be used to create or even to update
+
+## YAML Kubernetes Configuration File
+on top has apiversion & kind
+
+consists of 3 parts
+
+- metadata (f.e. name)
+- spec: for every part of configuration; attributes specific to the kind we create
+- status: automatically generated and added by Kubernetes -> will automatically compare desired vs actual state (basis of self-healing); updated continously; status is coming from etcd
+    - to access the status
+kubectl get deployment nginx-deployment -o yaml
+
+- stored with application code
+
+### Template
+bluetprint to a pod: has own metadata -> config applies to pod
+
+### Labels & Selectors
+- Metadata contains the label
+- spec part contains the selectors
+- Pods get a Label
+- tell the deployment to match all the labels to create the connection -> deployment knows which pods belong to it
+- service can be connected using the selector
+
+service.yaml
+```
+spec:
+    selector:
+        app: nginx
+```
+
+deployment.yaml
+```
+metadata:
+    labels:
+        app: nginx
+spec:
+    selector:
+        matchLabels:
+            app: nginx
+    template:
+        metadata:
+            labels:
+                app: nginx
+```
+
+### Ports
+- Service has a port where it is accessible at
+- service needs to know to which pod at which port it needs to forward request
+
+service.yaml
+```
+spec:
+  selector:
+    app: nginx
+  ports:
+    - protocol: tcp
+      port: 80   # Port number where the service will be accessible within the cluster
+      targetPort: 8080  # Port number on which your application is listening
+```
+deployment.yaml
+```
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25
+        ports:
+        - containerPort: 8080
+```
+
+### Simple setup using service & deployment
+
+```sh
+kubectl apply -f nginx-deployment.yaml
+kubectl apply -f nginx-service.yaml
+
+# are they correctly connected?
+kubectl describe service nginx-service
+# output shows the correct selector, target port and correct endpoint ip -> it must be ip addresses of the pods
+# how to find ip address of pod?
+kubectl get pod -o wide
+```
+
+### Demo Project
+- Mongo-db & mongo-express
+- Simple web application with its database
+- flow: client -> external service (mongo express) -> mongo-express pod -> internal service (mongo db) -> mongo db pod
+- order of creation matter -> we need secrets before we reference them in the deployment
+
+### Secrets
+secret.yaml
+```yaml
+data:
+  mongo-root-username: dXNlcm5hbWU= #base64 encoded, but not encrypted -> not safe!
+```
+This can be referenced, AFTER it was created in deployment.yaml
+
+```yaml
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: mongo-root-username
+```
+
+### ConfigMap
+- external configuration
+- centralized
+- other components can access it
+- as with secret: order of execution matters!
+```yaml
+          - name: ME_CONFIG_MONGODB_SERVER
+            valueFrom:
+                configMapKeyRef:
+                    name: mongodb-configmap
+                    key: mongo-database-url
+
+```
+
+### Service
+- either internal or external
+- clusterIp = internal service is the default; only gives internal ip address
+- LoadBalancer = external service; also gives external ip address
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-express-service
+spec:
+  selector:
+    app: mongo-express # connects to the pods with the label
+  type: LoadBalancer # <- means that the service will be accessible from outside the cluster = external service
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+      nodePort: 30000 # <- this is the port that will be used to access the service from outside the cluster
+```
+
+## K8s Namespaces
+
+
