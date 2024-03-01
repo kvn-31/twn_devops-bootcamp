@@ -294,7 +294,7 @@ This can be referenced, AFTER it was created in deployment.yaml
 
 ```
 
-### Service
+### Service (intro)
 - either internal or external
 - clusterIp = internal service is the default; only gives internal ip address
 - LoadBalancer = external service; also gives external ip address
@@ -314,6 +314,69 @@ spec:
       nodePort: 30000 # <- this is the port that will be used to access the service from outside the cluster
 ```
 
-## K8s Namespaces
+## K8s Namespaces (Detail)
+
+- resources can be organised in namespaces
+- a cluster can have multiple namespaces
+    - it is like a virtual cluster inside a cluster
+- out of box namespaces:
+    - kube-system: do not edit/create anything here -> for system processes
+    - kube-public: publicly accessible data, configmap with cluster information
+    - kube-node-lease: heartbeats of nodes, avialability of nodes
+    - default: used if no new namespace is created
+- kubectl create namespace NAME
+- better: use configuration file
+
+### When is a namespace needed?
+if only default namespace is used -> filled quickly; no overview
+
+- for better overview: group recouces in namespaces (f.e. database, monitoring, elastic stack, nginx/ingress)
+- to avoid conflicts: if multiple teams work on the same application it can lead to conflicts (if resource has same name, but different config
+- for environments in the same cluster (staging, development, ..) and now the namespaces can share the elastic stack namespace for example
+- resource sharing: for different versions in production -> might need the same shared resources
+- to limit access to resources on namespaces -> each team has own isolated env; also resource quota can be divided between teams
+
+### Characteristics of Namespaces
+- most resources of another namespace cannot be accessed (f.e. configmap/secret)
+- services can be shared between namespaces (database_url: NAMESPACE.SERVICE)
+- volume & node live globally in the cluster, cannot live in a namespace
+- by default components are created in default namespace
+
+### Apply Namespaces
+- kubectl apply -f FILE --namespace=my-namespace
+- directly in file in metadata <- preferred
+```
+        metadata:
+            name: NAME
+            namespace: NAMESPACE
+```
+
+- change the default/active namespace
+- kubectl config set-context --current --namespace=my-namespace
+    - after using this, the namespace for current context is set, meaning all subsequent commands will use it
+
+#### Kubens
+- even more convenvient tool
+- kubens is a tool to switch between Kubernetes namespaces (and configure them for kubectl) easily
+- install kubectx, automatically installs kubens
+
+```sh
+kubens #see list of namespaces
+kubens my-namespace #switch to namespace
+```
+
+
+## Services (Detail)
+
+
+
+
+
+
+
+
+
+
+
 
 

@@ -1,0 +1,108 @@
+# Bonus Databases
+
+### Setup
+
+- locally (f.e. mysql client) -> each user has own data
+
+
+- hosted remotely -> no local installation needed, test data available from start, but data affects everybody
+
+-> ideal solution: have both
+
+application code configures db connection
+
+library/module is used for db connection
+
+Database endpoint + credentials -> connection
+
+- as ENV variable
+-> properties/config files -> define value per environment (dev, staging,..) 
+
+DB needs to be installed & configured before application can be deployed (local on same server or remote)
+
+Regular backups need to be done, replication, high load performance -> System Admin / DB Engineer / DevOps Engineer handles this
+
+__
+
+## Database Types
+
+
+
+### Key Value
+- redis, memcached, etcd (kubernets)
+- unique key
+- no joins / other complex operations
+- fast because in memory
+- limited storage
+- no primary DB
+- used for: caching or message queue
+
+
+### Wide Column Databases
+
+- cassandra, HBase
+- same key, but value is divided in columns
+- no schema (any nr of columns, any data type)
+- scalable
+- queries similar to sql
+- no joins -> simpler, but limited
+- used for: time-series, iot-records, history of events
+
+### Document Databases
+
+- mongodb, dynamodb, couchDB
+- documents are containers for key value pairs
+- no schema
+- grouped in collection (can be organised in hierarchie)
+- slower writes (tree)
+- faster to read
+- used for: mobile apps, game apps, cms, most apps
+- can be used as primary DB of application
+- dont use for correlated data
+
+### Relational Databases
+- mysql, postgresql
+- most used
+- structured data -> requires strict schema
+- SQL (structured quesry language)
+- normalized (to avoid duplicated data)
+- ACID - compliant -> Atomicity, Consistency, Isolation, Druability
+- no matter what techincal issues happen -> data is consistent -> ho half changes are updated in the database -> either all or none
+- difficult to scale
+- not good for unstructured data (a lot of many to many relations)
+
+### Graph Databases
+- Neo4J, Dgraph
+- for networks
+- reduce complexity -> no need for multiple many to many relation tables)
+- directly connect entities (nodes and edges)
+- easier to query
+- best for: Graphs / Patterns / Recommandations
+
+### Search Databases
+- elastic search, solar
+- search through massive database entries
+- full text search efficiently
+- similar to document oriented db
+- creates index of words -> only index is searched
+
+Wrap up
+For most data -> relational
+handle fast serach -> serach engine
+cache -> key value
+Mostly,  combinations will be used
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
