@@ -110,6 +110,13 @@ a whole cluster cannot be tested on local machine because of potential lack of m
 - setup: https://minikube.sigs.k8s.io/docs/start/ -> if docker is not installed, have look at drivers page
 - start: minikube start --driver docker
 
+#### Minikube commands
+```
+minikube start
+minikube addons enable NAME
+minikube dashboard #opens the dashboard in a new window
+```
+
 ### Assign external service a public ip address with minikube
 
 minikube service NAME
@@ -133,6 +140,7 @@ kubectl get all
 kubectl get node
 kubectl get deployment
 kubectl get replicaset
+kubectl get namespace
 kubectl get pod -o wide # with more details such as ip address (handy to see if service is referencing the right pod)
 kubectl get deployment nginx-deployment -o yaml > nginx-deployment-result.yaml # save to file with auto-generated status section
 
@@ -367,16 +375,111 @@ kubens my-namespace #switch to namespace
 
 
 ## Services (Detail)
+- pods are ephemeral, are destroyed frequently -> in order to have a stable ip address services are needed
+- also provides load balancing
+
+### Types of services
+
+Cluster Ip
+
+- default
+- = internal service -> only accessible within the cluster
+- is accessible at a certain ip address & port
+- is the entrypoint after ingress
+- service forwards the request to one of the pods
+    - which pod(s)? -> by the selector it matches all the replicas
+    - which port? -> defined in targetPort attribute -> has to match the port where the container inside the pod is listening at
+- randomly selects to which pods the request is forwarded (load balancer)
+- multi port services
+    - inside the pod, another container is running (f.e. for monitoring)
+    - one service now is responsible for different endpoints (mongodb application and mongodb-exporter f.e.)
+    - the service now also needs to have multiple ports open, one for each container it forwards the request to
+```yaml
+  ports:
+    - name: mongodb
+      protocol: TCP
+      port: 27017
+      targetPort: 27017
+    - name: mongodb-exporter
+      protocol: TCP
+      port: 9216
+      targetPort: 9216
+```
+
+Headless service
+
+- if client/pod want to talk to a specific pod
+- not randomly selected
+- use case: stateful applications (database) -> pod replicas are not identical; for example mysql + replica -> only the main instance is allowed to write to db; replicas are syncing and only for reading data
+- kubernetes provides dns lookup service to return single ip address (ClusterIp); if clusterIp is set to none it returns the pod ip address instead
+- is used alongside the ClusterIp service, for specific operations
+- headless service has no load balancing, it is just used to talk to a specific pod
+
+NodePort
+
+- external service
+- external traffic accessible on a fixed port for each worker node
+- instead of using an ingress, the browser request will come directly to worker node
+- port exposed=nodePort value (has a fixed range)
+- clusterip service to which nodeport service will route is automatically created
+- not secure! -> only to test quickly
+
+LoadBalancer
+- external service
+- becomes accessible externally through cloud providers load balancer
+- nodePort and clusterIp services are created automatically
+- only accessible through the load balancer
 
 
+LoadBalancer is an extension of the NodePort service which is an extension of the ClusterIp service
 
+## Ingress
 
+- exposes http route to outside the cluster
+- instead of an external service, ingress can be used
+- domains can be assigned
+- An Ingress may be configured to give Services externally-reachable URLs, load balance traffic, terminate SSL / TLS, and offer name-based virtual hosting
+```
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ingress
+spec:
+  rules:
+  - host: "foo.bar.com" #valid domain address
+    http: #does not mean it is not https
+      paths:
+      - pathType: Prefix
+        path: "/" # -> foo.bar.com/ 
+        backend:
+          service:
+            name: my-internal-service
+            port:
+              number: 80 #internal service port
+```
 
+- forwards request from the host to the internal service
 
+### Ingress Controller
+- evaluates the rules
+- manages redirects
+- entrypoint to cluster
+- needs to be installed -> multiple implementations (even 3rd party)
 
+### Load Balancer
+there are different ways to connect to the ingress
 
+- ready-to-use hosting load balancer (f.e. aws): easy setup, forwards progress to ingress
+- bare metal
+    - some entrypoint needs to be configured
+    - can be inside the cluster or outside as separate server
+    - for example an external proxy: separate server -> no server in k8s cluster is accessible from outside, public ip address, entrypoint to cluster
 
-
+### Ingress Controller in Minikube
+- minikube addons enable ingress: enables k8s nginx implementation of ingress controller
+- minikube acts differently that the "real" web.
+- as we obviously do not have the domain "dashboard.com" registered, we will add it to the /etc/hosts file -> 127.0.0.1  dashboard.com
+- run minikube tunnel (only needed for local development)
 
 
 
