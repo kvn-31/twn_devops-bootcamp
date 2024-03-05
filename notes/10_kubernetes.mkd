@@ -647,6 +647,9 @@ spec:
 ## StatefulSet
 - stateful application = any application that stores data to keep track of state -> f.e. Databases; deployed using StatefulSet component
 - stateless: each request is completely new; can connect to a statful application; deployed using Deployment
+- to deploy StatefulSet either:
+    - create all configuration files manually
+    - use bundle of config files (f.e. Helm)
 
 ### Deployment vs StatfulSet
 - replicating stateful applications is more difficult
@@ -689,18 +692,59 @@ Pod Identity
 
 ## Helm Package Manager
 
-- Package Manager for Kubernetes
+### Package Manager for Kubernetes
 - Bundle of Yaml files
 - use existing helm charts (for applications)
 - or create own helm charts
 - on public repositories such as artifact hub or search using helm search KEYWORD
-- 
+- companies often use private registries
+
+### Templating Engine
+- f.e for multiple microservices most of Deployment and Service configurations are almost the same
+- it makes no sense to create own files for minor changes such as the name
+- -> Helm chart can define a common blueprint (template yaml config)
+- -> dynamic values are replaced by placeholders (coming from another file values.yaml)
+- instead of multiple yaml files -> just one yaml file
+- practical for ci/cd -> values are replaced on the fly
+
+### Same applications across different environments
+- considering dev/stage/prod stage
+- can share the same yaml file, but just replace env specific values
+
+### Helm structure
+- top level folder: name of chart
+- Chart.yaml: meta info about chart
+- values.yaml: values for the template files with default values
+- charts folder: dependencies
+- templates: the actual template files
+
+```sh
+helm install NAME
+helm install --values=my-valuey.yaml NAME # install with own values file
+helm upgrade NAME
+helm rollback NAME
+
+```
+
+### Release Management
+- keep track of chart executions
+- all changes applied (for example update) are tracked and can be rollbacked
 
 
+### Add Helm repository
+`helm repo add bitnami https://charts.bitnami.com/bitnami` -> is executed against the cluster the machine is connected to (uses kubectl)
+`helm search repo bitnami/mongodb`
+check chart details https://github.com/bitnami/charts/tree/main/bitnami/mongodb 
+``
 
+## Demo Project Helm Demo
 
+see Demo Readme
 
+Flow:
 
+- hostname, configured in ingress, is resolved  to ip address of NodeBalancer
+- ingress controller resolves the rule and forwards request to internal mongoexpress service
 
 
 
