@@ -1,5 +1,5 @@
 ```
-minikube start
+minikube start --driver=docker
 minikube addons enable ingress
 minikube dashboard
 kubectl apply -f dashboard-ingress.yaml

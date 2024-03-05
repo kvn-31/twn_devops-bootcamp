@@ -157,7 +157,7 @@ kubectl describe pod NAME #info about pod
 
 
 # interactive terminal inside pod
-kubectl exec -it NAME -- bin/bash
+kubectl exec -it NAME -- /bin/bash #alternatively use /bin/sh
 ```
 
 ## Layers of Abstraction
@@ -480,6 +480,235 @@ there are different ways to connect to the ingress
 - minikube acts differently that the "real" web.
 - as we obviously do not have the domain "dashboard.com" registered, we will add it to the /etc/hosts file -> 127.0.0.1  dashboard.com
 - run minikube tunnel (only needed for local development)
+
+### Multiple patchs for same host
+
+- multiple applications under the same domain
+
+```
+spec:
+  rules:
+  - host: foo.bar.com
+    http:
+      paths:
+      - path: /foo
+        backend:
+          service:
+            name: service1
+            port:
+              number: 4200
+      - path: /bar
+        backend:
+          service:
+            name: service2
+            port:
+              number: 8080
+```
+
+### Multiple sub-domains / domains
+
+```
+spec:
+  rules:
+  - host: foo.bar.com
+    http:
+      paths:
+        path: "/"
+        backend:
+          service:
+            name: service1
+            port:
+              number: 80
+  - host: bar.foo.com
+    http:
+      paths:
+        path: "/"
+        backend:
+          service:
+            name: service2
+            port:
+              number: 80
+```
+
+### Configuring TLS Certificate
+```
+spec:
+  tls:
+  - hosts:
+      - https-example.foo.com
+    secretName: testsecret-tls
+```
+secret
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: testsecret-tls
+  namespace: default #needs to be the same namespace as ingress
+data: #keys need to be names like this
+  tls.crt: base64 encoded cert 
+  tls.key: base64 encoded key
+type: kubernetes.io/tls
+```
+
+## Volumes
+- no data persistance out of the box
+- if pod dies -> data is gone
+- storage needs to be available on all nodes because we do not know where a pod (re)starts
+- needs to survive when whole cluster crashes
+- for DB or files
+
+### Persistent Volume
+- a cluster resource, created via yaml file
+- needs actual physical storage (internal/external/cloud)
+- K8s only offers the interface to the actual storage; which type of storage is needed needs to be decided by project/application needs
+- also: storage needs to be created & managed outside of k8s
+- are not namespaced! accessible by whole cluster
+
+Local Volume Types
+- violate requirements for data persistance: 1) tied to a specific node & 2) do not survice cluster crash
+
+Remote Volume Types
+- should be used to have data persistance
+
+### Persistent volume claim
+- Cluster Admin needs to create access to a volume (in the cluster or cloud)
+- Application has to claim the Persistent volume
+- this is done using a PVC -> defined in yaml
+- in yaml, specific specifications are set (size, access mode, ..) -> which volume satisfies this claim will be used
+- this PVC needs to be used in the pod specification to mount the volume to the pod
+- this volume is then mounted to the container
+```
+spec:
+    containers:
+    - name: mysql
+      image: mysql
+      volumeMounts:
+      - mountPath: /var/lib/mysql
+        name: site-data
+        subPath: mysql
+    volumes:
+    - name: site-data
+      persistentVolumeClaim:
+        claimName: my-lamp-site-data
+```
+
+### Benefits of Abstractions
+- separation of concerns -> devs to not need to cary about the volume in detail
+
+### Storage Class
+- to avoid a confusing structures especially in big clusters
+- provisions persistent volumes dynamically.. when PVC claims it
+- Each StorageClass has a provisioner that determines what volume plugin is used for provisioning PVs
+- internal provisioner (offerned by kubernetes) -> kubernetes.io
+- external provisioner
+- StorageClass = basically another abstraction level that abstracts the underlying storage provider
+
+```
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: storage-class-name
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: io1
+  iopsPerGb: "10"
+  fsType: ext4 
+```
+- is used in the PVC config
+```
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mypvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: storage-class-name 
+```
+- Hierachy: Pod claims storage via PVC -> PVC requests storage from SC -> SC creates PV that meets the needs of the claim
+
+
+## ConfigMap & Secret Volume Types
+- volume types that are treated differently
+- both are local volumes, but they are not managed by PVC, but by kubernetes itself with their own config files
+- how to pass config files, containing sensitive data (for example for external services such as nginx or javascrip app properties) to kubernetes pods?
+- ConfigMap & Secret are Local Volume Types
+
+### ConfigMap and Secret for Mounting Files
+
+- configMap and Secret cannot only be used to reference key value pairs, but also to mount files
+-> see 10_kubernetes/12-ConfigMap-SecretVolume-Types
+
+
+## StatefulSet
+- stateful application = any application that stores data to keep track of state -> f.e. Databases; deployed using StatefulSet component
+- stateless: each request is completely new; can connect to a statful application; deployed using Deployment
+
+### Deployment vs StatfulSet
+- replicating stateful applications is more difficult
+- -> stateless pods are identical and interchangable; created/deleted in random order with random hashes; one service that load balances to any pod
+- -> stateful pods cannot be created/deleted at the same time and cannot be randomly addressed because the replica pods are not identical. each pod has its own identity -> persistent identifier
+- this persistent identifier is needed because there is only one main pod that updates data
+- when db applications are scaled, only one pod is used to write, the other pods (replicas) are used to read data
+- the pods do not use the same physical storage
+- at any time, each pod must have the same data as the others -> contiously synchronized -> must be updated about each change
+
+
+Pod State
+
+- a pod can die, but the persistent volume is not coupled -> if a pod dies the PV gets re-attached to the same pod identifier
+- important to use remote storage because local volumes storage is tied to a specific node
+
+Pod Identity
+
+- fixed ordered names (mysql-0, 1, 2, 3, ..)
+- next pod is only created from previous and only created if the previous is up and running
+- deletion is done reverse order
+- each pod has an individual dns endpoint from service (f.e. mysql-0.svc2)
+- -> when a pod restarts the ip address changes, but name and endpoint stay the same
+
+
+## Managed Kubernetes Service (K8s in cloud)
+- unmanaged cluster: spinning up a cluster from scratch, using (virtual) servers, setup up k8s, nodes, .. -> everything needs to be managed -> big overhead
+- managed k8s service
+    - most is done automatically
+    - f.e. just choose how many worker nodes are needed
+    - everything is pre-installed
+    - control plane nodes are completely managed by platform (f.e. linode)
+    - also storage should be handled automatically (depending on platform)
+    - cloud provider's node balancer to scale / load balance
+    - session stickiness -> one user will only land on the same client backend for subsequent requests (which is a huge win)
+    - ssl via cert-manager
+    - dependent on one cloud provider's features -> app gets closely tied to one provider, moving made difficult (vendor lock-in)
+
+- setup & team grows -> automation is needed for creating, configuring etc -> terraform/ansible -> can also work with cloud provider
+
+## Helm Package Manager
+
+- Package Manager for Kubernetes
+- Bundle of Yaml files
+- use existing helm charts (for applications)
+- or create own helm charts
+- on public repositories such as artifact hub or search using helm search KEYWORD
+- 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
