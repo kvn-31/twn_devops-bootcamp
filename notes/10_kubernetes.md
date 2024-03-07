@@ -1053,3 +1053,10 @@ releases:
     - values/email-service-values.yaml
 # ...
 ```
+
+### Where to host helm files
+- should be hosted in a git repository
+- part of Infrastructure as code
+- can be done:
+  - with application code
+  - in a separate repository (preferred)
