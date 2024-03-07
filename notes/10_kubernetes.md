@@ -866,3 +866,89 @@ rules:
   - create secrets and configmaps
 - create deployment and service for each ms
   - decide if ms in same namespace or each ms in its own namespace
+
+
+## Kubenetes best practices
+
+### always specify image version
+`image: gcr.io/google-samples/microservices-demo/cartservice:v0.8.0`
+
+### use liveness and readiness probes
+- kubernetes restarts pods if they're dying, but it does not know if the application inside the pod is actually running/healthy
+- liveness: checks if the container is running; if not, restarts the container
+- readiness: checks if the container is ready to accept traffic (important on startup)
+- kubernetes can ping the application every x seconds
+```yaml
+          livenessProbe:
+            grpc: # using grpc protocol, but can also be done using httpGet or tcpsocket
+              port: 8080
+            periodSeconds: 5 # the check is executed every 5 seconds
+           # ...
+          readinessProbe:
+            httpGet:
+              path: "/_healthz"
+              port: 8080
+            periodSeconds: 5
+```
+
+### Configure resource requests for each container
+- cpu and memory
+- requests what the container is guaranteed to get
+- k8s scheduler uses this information
+```yaml
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+```
+
+### Configure resource limits for each container
+- cpu and memory
+- limits what the container can use (for example infinite loop with bug)
+- container can only go up to the limit
+- if the values are higher than the biggest node, the pod will not be scheduled
+```yaml
+            limits:
+              cpu: 200m
+              memory: 128Mi
+```
+
+### Dont expose a NodePort
+- security risk as it opens a port on each worker node
+- only use internal services with one entrypoint in the cluster
+- the cloud providers loadbalancer can be used or an ingress
+
+### More than 1 replica for Deployment
+- replica is 1 by default
+- that means if the pod crashes we have down-time until the pod is restarted
+
+### Always use more than 1 worker node in the cluster
+- single point of failure with just one node
+- even in simple applications
+- each replica should run on a different node!
+
+### Use labels for resources
+- labels are key value pairs attached to k8s components, giving them custom identifier for other components
+
+### Using Namespaces
+- better organization in the cluster
+- also good for access rights based on namespaces
+
+## Security Best Practices
+
+### Ensure Images are free of vulnerabilities
+- third party is always a risk
+- do manual or automatic checks (in build pipeline)
+
+### No root access for containers
+- containers should not run as root because it causes security risks
+- in non-official images always check if it is running as root
+
+```yaml
+  securityContext:
+    privileged: true # <-- dont do that
+```
+
+### Update cluster to latest K8s version
+- security patches are important
+
