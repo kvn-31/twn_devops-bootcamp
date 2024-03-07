@@ -1,0 +1,10 @@
+appName: emailservice
+appImage: gcr.io/google-samples/microservices-demo/emailservice
+appVersion: v0.8.0
+appReplicas: 2
+containerPort: 8080
+containerEnvVars: 
+- name: PORT
+  value: "8080"
+
+servicePort: 5000

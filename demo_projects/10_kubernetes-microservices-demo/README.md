@@ -7,6 +7,7 @@ The microservices-demo consists of multiple microservices, which have clear requ
 Apart from the services itself, a redis cache is needed, which is only used by the cart.
 How the services talk to each other can be seen in the architecture diagram below.
 ![Architecture](./assets/google-microservices-demo-architecture-diagram.png)
+For more details, the whole repository is added in `/microservices-demo`.
 
 The whole application is configured in the config.yaml, which describes all services, the redis cache and the frontend.
 The only service that is accessible from the outside is the frontend. This is done using a ClusterIP service.

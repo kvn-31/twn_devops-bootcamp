@@ -868,7 +868,7 @@ rules:
   - decide if ms in same namespace or each ms in its own namespace
 
 
-## Kubenetes best practices
+## Kubernetes best practices
 
 ### always specify image version
 `image: gcr.io/google-samples/microservices-demo/cartservice:v0.8.0`
@@ -952,3 +952,101 @@ rules:
 ### Update cluster to latest K8s version
 - security patches are important
 
+## Use Helm Chart for Microservices
+two ways:
+- helm chart for each microservice, if the configurations are very different
+- one shared helm chart for all microservices
+- the two approaches can also be combined (use shared charts for common configurations and separate charts for specific configurations)
+
+### Setup helm and File structure
+- start with `helm create NAME` -> creates a new helm chart
+- Chart.yaml: meta info about chart
+- values.yaml: values for the template files with default values
+- charts folder: dependencies
+- templates: the actual template files
+- .helmignore: files that should not be included in the chart/build
+
+#### Values object
+in a template file such as deployment.yaml
+```yaml
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+```
+The values can be passed in the values object:
+- in the values.yaml file
+- in a user supplied values file with -f flag
+- in the command line with --set flag
+
+The helm engine will then replace the placeholders with the values
+- values should be named in camelCase
+- can be defined flat or nested
+  - appName vs app.name
+  - attention: nested values are not easy to set from the command line
+
+#### Environment variables in Helm
+using range which is a go template function in a for-each-style loop
+```yaml
+    spec:
+      containers:
+        - name: {{ .Values.appName }}
+          image: "{{ .Values.appImage }}:{{ .Values.appVersion }}"
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          env:
+              {{- range .Values.containerEnvVars}}
+        - name: {{ .key }}
+          value: {{ .value | quote }}
+              {{- end}}
+```
+```yaml
+containerEnvVars:
+- name: ENV_VAR_ONE
+  value: "valueone"
+- name: ENV_VAR_TWO
+  value: "valuetwo"
+```
+#### Values file
+a yaml file that has the default values, which will mostly be overwritten by the application specific values
+
+### Helm commands
+
+```sh
+helm create NAME
+helm template -f FILE NAME #render chart template locally and display the output
+helm template -f values/redis-values.yaml charts/redis/ # example
+helm lint NAME # checks for errors
+helm install NAME # install chart
+helm install -f email-service-values.yaml emailservice microservice # install with own values file
+helm install --dry-run ... #check generated manifest without installing the chart
+helm ls # list all releases
+```
+
+### Deploy Helm to cluster
+we can either 
+- run helm install manually / using a script file (quite inefficient)
+```sh
+helm install -f values/email-service-values.yaml emailservice charts/microservice
+helm install -f values/cart-service-values.yaml cartservice charts/microservice
+helm install -f values/currency-service-values.yaml currencyservice charts/microservice
+# ...
+```
+- or using a Helmfile (more elegant)
+  - declarative way for deploying helm charts
+```yaml
+releases:
+  - name: rediscart
+    chart: charts/redis
+    values:
+    - values/redis-values.yaml
+    - appReplicas: "1"
+    - volumeName: "redis-cart-data"
+
+  - name: emailservice
+    chart: charts/microservice
+    values:
+    - values/email-service-values.yaml
+# ...
+```
