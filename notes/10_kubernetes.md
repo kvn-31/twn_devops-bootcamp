@@ -47,7 +47,7 @@
     - to avoid this we use Volumes
     - attaches a physical storage to a pod
     - storage can be on local machine/remote/outside the cluster
-    - kubernetes does not manage data persistance!
+    - kubernetes does not manage data persistence!
 - Deployment
     - kubernetes uses distributed systems
     - -> instead of relying on one pod, everything is replicated -> if one pod fails the prod app is not down
@@ -552,7 +552,7 @@ type: kubernetes.io/tls
 ```
 
 ## Volumes
-- no data persistance out of the box
+- no data persistence out of the box
 - if pod dies -> data is gone
 - storage needs to be available on all nodes because we do not know where a pod (re)starts
 - needs to survive when whole cluster crashes
@@ -566,10 +566,10 @@ type: kubernetes.io/tls
 - are not namespaced! accessible by whole cluster
 
 Local Volume Types
-- violate requirements for data persistance: 1) tied to a specific node & 2) do not survice cluster crash
+- violate requirements for data persistence: 1) tied to a specific node & 2) do not survice cluster crash
 
 Remote Volume Types
-- should be used to have data persistance
+- should be used to have data persistence
 
 ### Persistent volume claim
 - Cluster Admin needs to create access to a volume (in the cluster or cloud)
@@ -631,6 +631,16 @@ spec:
 ```
 - Hierachy: Pod claims storage via PVC -> PVC requests storage from SC -> SC creates PV that meets the needs of the claim
 
+### Empty Dir Volume
+- is not a persistent volume
+- lives as long as the pod is running
+- is created when the pod is created
+- ideal for temporary storage such as redis cache
+```
+volumes:
+  - name: redis-data
+    emptyDir: {}
+```
 
 ## ConfigMap & Secret Volume Types
 - volume types that are treated differently
@@ -809,3 +819,50 @@ in deployment.yaml
 - role component
     - bound to namespace
     - define what resources can be accessed
+    - what actions can be performed
+- rolebinding component
+    - binds role to user or group
+    - can be used to bind role to service account
+- clusterrole and clusterrolebinding
+    - same as role and role binding (to admin group), but for the whole cluster
+    - used for k8s admins
+- how to create users/groups
+  - relies on external sources such as static token files, certificates or 3rd party identity service (ldap)
+  - api server needs to be configured to use these sources
+- service accounts
+  - not only people, but also applications can access the cluster
+  - can be inside and outside the cluster (f.e. jenkins)
+  - -> k8s service account component is used
+- to check access of current user using can-i
+  - `kubectl auth can-i get pods --as user --namespace default`
+example of a role
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods"] # components such as Pods, Deployments, ..
+  verbs: ["get", "watch", "list"] # actions that can be performed
+  resourceNames: ["my-pod"] # more granular, only this pod can be accessed
+```
+
+## Microservices
+- smaller independent applications
+- less interconnected services
+- how do they communicate?
+  - service to service api calls
+  - message broker (f.e. redis)
+  - service mesh architecture -> each ms has its own helper application (f.e. istio)
+- information needed from dev team
+  - what microservices
+  - which ms is talking to which
+  - how are they talking
+  - which database is used
+  - on which port does each ms run
+  - which ms is exposed to the outside
+  - which env variables are expected
+- prepare environment
+  - deploy needed 3rd party services
+  - create secrets and configmaps
+- create deployment and service for each ms
+  - decide if ms in same namespace or each ms in its own namespace
