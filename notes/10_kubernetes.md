@@ -753,15 +753,59 @@ worflow:
 - CICD tools (jenkins) pushes to private registry
 - -> how to get this image in the kubernetes cluster?
 
-1. create secret component with docker registry credentials
+1. create secret component with docker registry credentials (manually by copying docker config data or using kubectl create secret)
 2. use secret using imagePullSecrets
 
 see 17-deploying-images-from-private-docker-repo
 
+docker-secret.yaml
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-registry-key
+data:
+  .dockerconfigjson: BASE64 encoded string of docker config
+type: kubernetes.io/dockerconfigjson
+```
 
+in deployment.yaml
+```
+# ...
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      imagePullSecrets:
+        - name: my-registry-key # this key is used to pull the image from the private registry
+      containers:
+        - name: my-app
+          image: NAME #replace with full image name: <your-repo>/<your-image>:<tag>
+          imagePullPolicy: Always # force to pull the image from the registry, even if it already exists on host machine
+          ports:
+            - containerPort: 3000
+```
 
+## K8s operator
+- mainly used for stateful operations
+- for stateful applications each pod has its own state and identity, the order in which pods get added/deleted matters
+- also, for each application (mysql, postgresql, elastiscsearch) the process is different -> no standard solution
+- manual intervention is needed for stateful applications,  which is against the k8s idea
+- -> operator solves this problem
+- does the manual tasks
+    - how to deploy the app
+    - how to create cluster of replicas
+    - how to recover
+- task are automated and re-usable
+- operator has the same control loop mechanism as k8s
+- uses CRDs (custom resource definitions) = custom K8s component
+- sets the domain/app specific knowledge on top of the core k8s concept/lifecycle
+- operators exist for each appliction (f.e. mysql, postgresql, ..) -> created by domain experts (community, f.e. zalando)
 
-
-
-
-
+## Authorization with RBAC
+- role based access control
+- least privilege rule -> should only have privileges they need
+- role component
+    - bound to namespace
+    - define what resources can be accessed
