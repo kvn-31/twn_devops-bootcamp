@@ -1022,6 +1022,8 @@ helm install NAME # install chart
 helm install -f email-service-values.yaml emailservice microservice # install with own values file
 helm install --dry-run ... #check generated manifest without installing the chart
 helm ls # list all releases
+helmfile sync # applies a helmfile
+helmfile destroy # deletes all releases
 ```
 
 ### Deploy Helm to cluster
@@ -1035,6 +1037,7 @@ helm install -f values/currency-service-values.yaml currencyservice charts/micro
 ```
 - or using a Helmfile (more elegant)
   - declarative way for deploying helm charts
+  - yaml file
 ```yaml
 releases:
   - name: rediscart
