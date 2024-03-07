@@ -747,7 +747,16 @@ Flow:
 - ingress controller resolves the rule and forwards request to internal mongoexpress service
 
 
+## Deploy Image in Kubernetes from private Docker repo
+worflow:
+- commit triggers CI build
+- CICD tools (jenkins) pushes to private registry
+- -> how to get this image in the kubernetes cluster?
 
+1. create secret component with docker registry credentials
+2. use secret using imagePullSecrets
+
+see 17-deploying-images-from-private-docker-repo
 
 
 

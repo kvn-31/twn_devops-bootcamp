@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+  labels:
+    app: my-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      imagePullSecrets:
+        - name: my-registry-key # this key is used to pull the image from the private registry
+      containers:
+        - name: my-app
+          image: IMAGE #replace with full image name: <your-repo>/<your-image>:<tag>
+          imagePullPolicy: Always # force to pull the image from the registry, even if it already exists on host machine
+          ports:
+            - containerPort: 3000
