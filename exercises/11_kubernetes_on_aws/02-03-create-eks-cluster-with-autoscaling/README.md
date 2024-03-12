@@ -67,3 +67,51 @@
 - Can always be scaled up increasing the node group scaling configuration
 - With node group all necessary processes are installed (containerd, kubectl, ..)
       
+## Configure auto scaling
+- auto-scaling group was automatically created with the node group in aws
+- ec2 instances inside the worker node need permissions to communicate with the auto-scaling group -> create policy
+- create policy - JSON - paste the following:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "autoscaling:DescribeAutoScalingGroups",
+        "autoscaling:DescribeAutoScalingInstances",
+        "autoscaling:DescribeLaunchConfigurations",
+        "autoscaling:DescribeTags",
+        "autoscaling:SetDesiredCapacity",
+        "autoscaling:TerminateInstanceInAutoScalingGroup",
+        "ec2:DescribeLaunchTemplateVersions"
+      ],
+      "Resource": "*",
+      "Effect": "Allow"
+    }
+  ]
+}
+```
+- attach policy to the existing node group IAM role
+- edit the `cluster-autoscaler-autodiscover.yaml` file to the needs (or follow the instructions below for a later edit)
+- `kubectl apply -f cluster-autoscaler-autodiscover.yaml` apply cluster autodiscover from https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
+- `kubectl edit deployment -n kube-system cluster-autoscaler` <-- this edit is only needed if the `cluster-autoscaler-autodiscover.yaml` was not edited beforehand
+  - add `cluster-autoscaler.kubernetes.io/safe-to-evict: "false"` metadata/annotations
+  - replace `YOUR-CLUSTER-NAME` with the actual cluster name
+  - below ^this line add
+  ```
+  - —balance-similar-node-groups
+  - —skip-nodes-with-system-pods=false
+    ```
+  - replace the version in `image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.XX.X` to match the current kubernetes version running in the cluster
+    - to do this, find the appropriate version here: https://github.com/kubernetes/autoscaler/tags
+- `kubectl get pod -n kube-system` find the name of the cluster autoscaler pod
+- `kubectl logs -n kube-system AUTOSCALER-POD` check the logs
+
+## Deploy application to EKS Cluster
+we want to create an external service (type LoadBalancer) with an AWS (cloud-specific) load balancer attached to it
+- `kubectl apply -f nignx-config.yaml`
+- -> in aws ec2 a load balancer has automatically been created
+
+## Test the scaling under artifical load
+- `kubectl edit deplyoment nginx` - increase replica count to 20 -> pods get created -> resources are not enough (some are in pending state) -> autoscaler needs to configure additional ec2 instances 
+- `kubectl get nodes` -> nodes should have spun up

@@ -42,6 +42,7 @@
 ### EKS with EC2 instances
 - self-managed
 - -> need to manage infrastructure for worker nodes
+- can have multiple pods on once virtual machine/instance
 
 ### EKS with NodeGroup
 - semi managed
@@ -51,6 +52,17 @@
 
 ### EKS with Fargate
 - fully managed worker nodes
+- serverless -> no ec2 instances
+- 1 pod per virtual machine
+- all the vms created are running in aws managed account, not in our account
+- limitation: no support for stateful applications, no support for DaemonSets
+
+Fargate Profile
+- applies pod selection rules which specify which pods should use Fargate
+
+### EKS cluster - using both Fargate and NodeGroup
+- we can use both fargate and nodegroup in the same cluster
+- for example if we want to use fargate, but also need to support stateful applications
 
 ### Create an EKS cluster
 steps:
@@ -70,4 +82,13 @@ steps:
 ## Setup an EKS cluster
 see [README.md](..%2Fexercises%2F10_kubernetes_on_aws%2F02-create-eks-cluster%2FREADME.md)
 
+### Auto-scaling
+- after creating a node group, an auto-scaling group is automatically created
+- it will automatically add/remove instances depending on the load
+- tradeoff:
+  - save costs, but ...
+  - provisioning new ec2 instance takes time
 
+## Cleanup EKS cluster
+- remove nodegroups and fargate profiles
+- delete cluster
