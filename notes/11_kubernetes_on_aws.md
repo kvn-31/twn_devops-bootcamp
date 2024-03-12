@@ -92,3 +92,15 @@ see [README.md](..%2Fexercises%2F10_kubernetes_on_aws%2F02-create-eks-cluster%2F
 ## Cleanup EKS cluster
 - remove nodegroups and fargate profiles
 - delete cluster
+- delete roles not used anymore
+- delete cloudformation stacks (will remove vpc, subnets etc)
+
+## EKS cluster with eksctl
+- before we created the cluster manually (see [README.md](..%2Fexercises%2F10_kubernetes_on_aws%2F02-create-eks-cluster%2FREADME.md))
+- takes time, not easy to replicate
+- one of the easiest way to automate the creation of an EKS cluster is using eksctl (eks control)
+- cluster will be created with default settings, but can be customized using cli options or a configuration file (yaml)
+
+### Setup eksctl
+- install using `sudo pacman -S eksctl` or system equivalent
+- configure aws credentials
