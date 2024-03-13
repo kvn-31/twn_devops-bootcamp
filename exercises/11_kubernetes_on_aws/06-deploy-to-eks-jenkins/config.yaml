@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Config
+clusters:
+  - cluster:
+      certificate-authority-data: /etc/kubernetes/pki/ca.crt
+      server: <endpoint-url>
+    name: kubernetes
+contexts:
+  - context:
+      cluster: kubernetes
+      user: aws
+    name: aws
+current-context: aws
+users:
+  - name: aws
+    user:
+      exec:
+        apiVersion: client.authentication.k8s.io/v1beta1
+        command: /usr/local/bin/aws-iam-authenticator
+        args:
+          - "token"
+          - "-i"
+          - <cluster-name>

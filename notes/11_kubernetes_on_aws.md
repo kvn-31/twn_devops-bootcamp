@@ -104,3 +104,54 @@ see [README.md](..%2Fexercises%2F10_kubernetes_on_aws%2F02-create-eks-cluster%2F
 ### Setup eksctl
 - install using `sudo pacman -S eksctl` or system equivalent
 - configure aws credentials
+
+### Create EKS cluster with eksctl
+These option will pretty much create the same cluster as in the previous example
+```bash
+eksctl create cluster \
+--name demo-cluster \
+--version 1.29 \
+--region eu-central-1 \
+--nodegroup-name demo-nodes \
+--node-type t2.micro \
+--nodes 2 \
+--nodes-min 1 \
+--nodes-max 3
+```
+The execution of this command will take a while (up to half an hour)
+
+## Deploy to EKS from Jenkins
+- we can use Jenkins to deploy to EKS
+- steps to configure:
+  - install kubectl in the jenkins container
+  - install aws-iam-authenticator in the jenkins container (was installed in local machine automatically with eksctl)
+  - create kubeconfig to connect to eks cluster
+  - adjust Jenkinsfile to deploy to eks cluster
+
+### Setup Jenkins (Docker) to deploy to EKS
+- exec into the jenkins container as root
+- install kubectl: download latest stable version of kubectl, chmod and move executable `curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl; chmod +x ./kubectl; mv ./kubectl /usr/local/bin/kubectl`
+- install aws-iam-authenticator:
+```bash
+curl -Lo aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.6.11/aws-iam-authenticator_0.6.11_linux_amd64
+chmod +x ./aws-iam-authenticator
+mv ./aws-iam-authenticator /usr/local/bin 
+```
+- create kubeconfig file
+  - we will create the kubeconfig outside of the container on the host and then copy it into the container
+  - use the template `config.yaml` taken from aws documentation
+    - copy the contents of the `config.yaml` into a new file on the host (f.e. `vim config`)
+    - replace `cluster-name` with the name of the eks cluster
+    - replace `endpoint-url` with the api server endpoint url of the eks cluster
+    - replace `certificate-authority-data` with the certificate-authority-data of the eks cluster (can be taken from local machine if already connected `~/.kube/config`)
+    - exec into the jenkins container (as normal user, not root), cd ~ and print the path -> this is the home directory of the jenkins user
+    - `mkdir .kube`
+    - exit the container and on host machine copy the `config` file into the `.kube` directory of the jenkins user using `docker cp config "YOUR DOCKER CONTAINER ID":/var/jenkins_home/.kube/`
+  - best practice: create AWS IAM user for Jenkins with limited permissions
+
+Jenkins
+- prerequisite: running pipeline job (in this case multi branch pipeline job)
+- add credentials for the aws user to the pipeline job credentials
+  - aws credentials (can be grabbed from local machine cat ~/.aws/credentials): 
+    - secret: actual key id + id: for example -> jenkins_aws_access_key_id
+    - secret: actual secret key + id: for example -> jenkins_aws_secret_access_key
