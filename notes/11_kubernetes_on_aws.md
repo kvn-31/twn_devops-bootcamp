@@ -172,3 +172,31 @@ stage('deploy') {
             }
         }
 ```
+> Attention: These instructions do not follow security best practices. Better: Create Jenkins user on EC2 instance and use it to deploy to EKS.
+> **Do not use the K8s admin user**
+
+
+### Setup Jenkins (Docker) to deploy to Linode
+there are a few differences when deploying to Linode (it is easier, but aws allows more granularity)
+- install kubectl (as done above for EKS)
+- add kubeconfig derived from linode to jenkins (secret file)
+- install kubernetes cli jenkins plugin (Kubernetes CLI)
+- configure Jenkinsfile to deploy to Linode
+```allykeynamelanguage
+withKubeConfig([credentialsId: 'linode-kubeconfig', serverUrl: ENDPOINT]) {
+    sh 'kubectl create deployment nginx-deployment --image=nginx'
+}
+```
+
+### Complete Jenkins Pipeline w Build and Deploy to EKS
+- see [Java Maven App Project](https://github.com/kvn-31/twn_java-maven-app/tree/build-and-deploy-k8s)
+
+### Use ECR instead of Docker Hub for Jenkins Pipeline
+- see [Java Maven App Project](https://github.com/kvn-31/twn_java-maven-app/tree/ )
+- create ecr repository
+- create credentials in Jenkins
+  - run this command on local/host machine `aws ecr get-login-password --region eu-central-1` and copy the password
+  - create credentials with the copied password and the username `AWS`
+- adjust building and tagging of the image in Jenkinsfile
+- create secret for k8s to pull from ecr
+  - 

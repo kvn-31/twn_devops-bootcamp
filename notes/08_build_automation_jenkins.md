@@ -151,6 +151,14 @@ withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable:
     }
 ```
 
+### Using envsubst to replace env vars in files
+- use case: we have a k8s deployment file with env vars that need to be replaced with values from jenkinsfile
+- envsubst needs to be installed in jenkins container
+  - exec into jenkins container as root 
+  - `apt-get install gettext-base`
+- envsubst creates a temporary file with the replaced values, which we can pipe: `envsubst < kubernetes/deployment.yaml | kubectl apply -f -`
+- 
+
 ### Tools
 
 - specify tools { } block -> makes tool available in all stages
