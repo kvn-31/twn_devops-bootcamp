@@ -8,7 +8,7 @@
     - automation
     - documentation
 - automate and manage infrastructure
-- open source, declarative language
+- not open source anymore, open source alternative is f.e. openTofu
 - provisioning infrastructure (<-- terraform) and deploying applications are two separated tasks, might be done by
   different teams
 
@@ -79,7 +79,7 @@ resource "aws_vpc" "main" {
 ```
 
 ### Terraform Commands
-
+- `init` - initialize repo, download providers
 - `refresh` - update the state file with the real-world infrastructure
 - `plan` - create / show the execution plan to achieve the desired state
 - `apply` - apply the execution plan
@@ -286,6 +286,12 @@ variable "cidr_blocks" {
 resource "aws_vpc" "development-vpc" {
   cidr_block = var.cidr_blocks[0].cidr_block
 }
+#####
+###
+tags       = {
+  Name : "${var.env_prefix}-vpc" #<-- string interpolation
+}
+###
 ```
 tfvars
 ```tf
@@ -305,3 +311,42 @@ cidr_blocks = [
 variable avail_zone {
 } #automatically picks up TF_VAR_avail_zone, if it is set
 ```
+
+## Git
+- do not check in
+  - .terraform
+  - state files
+  - tfvars -> might contain sensitive data, might be different for each team member
+
+
+## Best practices
+- create infrastructure from scratch
+- leave default created by AWS as is (like default VPC)
+- create as much as possible with IaC to be able to delete and replicate later -> less manual actions needed
+
+## Automate AWS EC2 Key Pair Creation
+- normally we would need to manually create a keypair in aws console, download, chmod400, add to ssh agent, ..
+- with terraform we can automate this process
+
+```tf
+resource "aws_key_pair" "ssh-key" {
+  key_name = "server-key"
+  public_key = file(var.public_key_location) #path to public key
+}
+
+# ...
+# reference the key pair in the instance
+resource "aws_instance" "web" {
+  ami           = "ami-a1b2c3d4"
+  instance_type = "t2.micro"
+  key_name      = aws_key_pair.ssh-key.key_name
+}
+```
+
+```bash
+ssh -i /path/to/private/key ec2-user@public-ip
+# or if using the default key
+ssh ec2-user@public-ip
+```
+
+## Execute commands on EC2 instance (on creation)
