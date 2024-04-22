@@ -11,6 +11,8 @@
 - not open source anymore, open source alternative is f.e. openTofu
 - provisioning infrastructure (<-- terraform) and deploying applications are two separated tasks, might be done by
   different teams
+- it covers the part of creating and managing infrastructure (initial setup, manage infrastructure, initial application
+  setup), but it does NOT/is not made to manage the actual application (running an update etc) -> might be a job for Ansible
 
 ## Installation
 
@@ -350,3 +352,47 @@ ssh ec2-user@public-ip
 ```
 
 ## Execute commands on EC2 instance (on creation)
+Important to know: this command is handed over to the cloud provider (f.e. aws) and is executed after terraform is finished -> terraform has no control.
+We only get the info about it with ssh to the server and debugging.
+```tf
+resource "aws_instance" "myapp-server" {
+  user_data                   = file("entry-script.sh")
+  user_data_replace_on_change = true # -> instance is destroyed and recreated if user_data changes
+}
+```
+
+## Provisioners
+- provisioners can be used for behaviors that cannot be achieved with terraform
+- they are not recommended and should be used as last resort
+- there may be unexpected behavior
+- breaks concept of idempotency (running the same command multiple times should have the same result)
+
+### Provisioner - Remote Exec - Alternative to User Data
+- remote-exec provisioner is used to execute a script on a remote machine after it is created
+- it connects via ssh using Terraform
+
+### Provisioner - File
+- to copy files to the remote machine
+- source - source file or folder
+- destination - absolute path
+```tf
+provisioner "file" {
+    source = "entry-script.sh"
+    destination = "/home/ec2-user/entry-script-on-ec2.sh"
+  }
+```
+
+### Provisioner - Local Exec
+- invokes a local executable after a resource is created -> locally not on the created resource
+- alternative: use Local provider by Hashicorp
+
+
+### Alternatives to Provisioners
+- as stated above provisioners should not be used as they break the concept of idempotency
+- alternatives:
+  - use a configuration management tool like Ansible/puppet
+  - execute scripts separate from terraform (f.e. as ci cd step)
+
+### Provisioner Failure
+- if a provisioner fails, the resource is marked as tainted and will be recreated on the next apply
+- it might still be created and running
