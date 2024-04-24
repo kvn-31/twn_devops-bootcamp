@@ -396,3 +396,59 @@ provisioner "file" {
 ### Provisioner Failure
 - if a provisioner fails, the resource is marked as tainted and will be recreated on the next apply
 - it might still be created and running
+
+## Modules
+- without modules:
+  - huge file
+  - no overview
+  - complex configurations
+- modules are like functions in programming
+  - input variables like function arguments
+  - output values like return values
+- a module groups resources together
+- instead of creating modules, we can use existing modules (f.e. from the terraform registry)
+- by referencing a module the needed providers are automatically installed using terraform init
+- -> modules have provider dependencies
+- common practice:
+  - main.tf
+  - outputs in outputs.tf
+  - variables in variables.tf
+  - providers.tf
+- files do not need to be linked, Terraform automatically picks them up
+
+### Create a module
+- in /modules create a folder with the module name
+- create main.tf, variables.tf, outputs.tf, ...
+- structure: root module + child modules sitting in /modules
+  - child module: module that is called by another configuration
+- terraform init needs to be run after adding and referencing a module in root
+
+### Module Input
+- input variables are defined in module/variables.tf
+- they are passed to the module in the root module
+- the module uses the input variables to create resources
+
+```tf
+module "myapp-subnet" {
+  source = "./modules/subnet"
+  avail_zone = var.avail_zone
+  default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+}
+```
+
+### Module Output
+- if we need to pass values from the module to the root module/or another module we need the output
+- output is like a return value of a function
+- defined in module/outputs.tf
+
+```tf
+output "subnet" {
+  value = aws_subnet.myapp-subnet-1 #exports the whole object as output
+}
+```
+- reference in root module
+```tf
+resource "aws_instance" "myapp-server" {
+  subnet_id              = module.myapp-subnet.subnet.id
+}
+```
