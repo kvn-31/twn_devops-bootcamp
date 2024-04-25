@@ -1,4 +1,4 @@
-# Terraform - Provision EC2
+# Terraform - Provision EC2 using Provisioners
 
 We automate the following tasks using Terraform:
 - Create a VPC

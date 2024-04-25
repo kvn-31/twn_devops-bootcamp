@@ -452,3 +452,8 @@ resource "aws_instance" "myapp-server" {
   subnet_id              = module.myapp-subnet.subnet.id
 }
 ```
+
+## Automate Provisioning EKS
+- problem: no version control (history)
+- no simple replication of infrastructure possible
+- no simple clean-up

@@ -1,4 +1,4 @@
-# Terraform - Provision EC2
+# Terraform - Provision EC2 using Modules
 
 We automate the following tasks using Terraform:
 - Create a VPC
