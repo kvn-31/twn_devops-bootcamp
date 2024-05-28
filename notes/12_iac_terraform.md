@@ -457,3 +457,77 @@ resource "aws_instance" "myapp-server" {
 - problem: no version control (history)
 - no simple replication of infrastructure possible
 - no simple clean-up
+
+### Terraform in Jenkins (+AWS)
+- create credentials in aws, add as secret in Jenkins
+- install Terraform inside Jenkins container
+  - ssh into server, exec into jenkins docker container as root
+  - https://developer.hashicorp.com/terraform/install
+- TF configuration to provision server
+- adjust Jenkinsfile to run TF commands
+
+set variable values from ci/cd pipeline
+- use terraform env variables
+- TF_VAR_name
+```Jenkinsfile
+        stage("provision server") {
+            environment {
+                TF_VAR_env_prefix = 'test'
+            }
+```
+in Jenkinsfile
+will set the defined variable env_prefix
+```tf
+variable env_prefix {
+  default = "dev"
+}
+```
+
+#### Reference output from TF in Jenkinsfile
+- example: ip of dynamically created ec2 instance is needed for further steps
+- output the ip in TF
+- read the output in Jenkinsfile and save to env variable
+```Jenkinsfile
+EC2_PUBLIC_IP = sh(
+              script: "terraform output NAMEOFOUTPUT",
+              returnStdout: true
+            ).trim()
+```
+
+### Remote State
+- problem: working in a team/with ci cd pipeline, multiple people working on the same infrastructure having their own TF state
+- -> each user/ci server must make sure to have the latest state
+- solution: remote state
+  - store the state in a remote location (f.e. S3 bucket)
+  - all users/ci servers can access the state
+  - state is backed up
+
+```tf
+terraform {
+  required_version = ">= 0.12"
+  backend "s3" {
+    bucket = "kvn-tf-s3-bucket" # bucket has to be created in aws before
+    key    = "myapp/state.tfstate"
+    region = "eu-central-1"
+  }
+}
+```
+
+
+## Best Practices
+- Only change state file through terraform commands - never directly edit it
+- Always use remote state
+- Use state locking -> lock the state file to prevent multiple users from changing it at the same time
+  - configure in storage backend (S3, ...)
+- backup state file
+  - enable versioning in storage backend
+- one state file per environment
+- host tf scripts in own git repo
+  - collaboration
+  - version control
+- same procedures for infrastructure as for code
+  - code review
+  - testing
+- execute terraform commands in ci/cd pipeline
+  - avoid manual execution
+  - -> single location for all changes
