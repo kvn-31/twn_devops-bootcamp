@@ -149,3 +149,22 @@ more than just one line
 """
 ```
 
+## Modules
+- a .py file to logically organize code
+- a module contains related code (f.e. a feature)
+- use `import` to include a module
+```python
+import mymodule as mm # with optional alias
+mm.greeting("seas")
+```
+- alternatively only import specific function
+```python
+from mymodule import greeting
+greeting("seas")
+```
+- built-in modules
+  - datetime, math, os, sys, random, json, etc.
+```python
+import datetime
+x = datetime.datetime.now()
+```
