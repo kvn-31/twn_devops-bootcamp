@@ -3,18 +3,24 @@ print("output")
 calculation_to_units = 24
 name_of_unit = "hours"
 
+def days_to_units(num_of_days, unit = "hours"):
+    if unit == "hours":
+        return f"{num_of_days} days are {num_of_days * 24} {unit}"
+    elif unit == "minutes":
+        return f"{num_of_days} days are {num_of_days * 24 * 60} {unit}"
+    else:
+        return "unsupported unit"
 
-def days_to_units(num_of_days):
-    return f"{num_of_days} days are {num_of_days * calculation_to_units} {name_of_unit}"
 
-
-def validate_and_execute(user_input):
+def validate_and_execute(days_and_unit_dict):
     try:
-        user_input = int(user_input)
-        if user_input > 0:
-            calculated_value = days_to_units(user_input)
+
+        num_of_days = int(days_and_unit_dict["days"])
+        unit = days_and_unit_dict.get("unit")
+        if num_of_days > 0:
+            calculated_value = days_to_units(num_of_days, unit)
             print(calculated_value)
-        elif user_input == 0:
+        elif num_of_days == 0:
             print("You entered a 0, please enter a valid number")
         else:
             print("You entered a negative number, no conversion for you")
@@ -23,5 +29,12 @@ def validate_and_execute(user_input):
         print("Your input is not a number. Don't ruin my program")
 
 
-user_input = input("Enter a number of days:\n")
-validate_and_execute(user_input)
+user_input = ""
+while user_input != "exit":
+    user_input = input("Enter a number of days and conversion unit:\n")
+    days_and_unit = user_input.split(":")
+    if len(days_and_unit) != 2:
+        print("You entered the input in the wrong format. Stick to the x:unit format")
+    else:
+        days_and_unit_dictionary = {"days": days_and_unit[0], "unit": days_and_unit[1]}
+        validate_and_execute(days_and_unit_dictionary)

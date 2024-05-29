@@ -22,6 +22,9 @@
 - Integer
 - Float
 - Boolean
+- Lists []
+- Dictionaries {}
+- Tuples ()
 
 `type(value)` returns the type of the value
 
@@ -90,3 +93,59 @@ try:
 except ValueError:
     print("You entered an invalid input. No calculation done")
 ```
+
+### Lists & Loops
+- while
+```pyton
+user_input = ""
+while user_input!= "exit"
+    user_input = input("Enter a number of days:\n")
+    validate_and_execute(user_input)
+```
+- for
+```python
+for i in range(1, 10):
+    print(i)
+```
+
+- Lists
+```python
+my_list = ["January", "February", "March"]
+my_list[0] = "December" # changes the first element
+my_list.pop() # removes the last element
+my_list.append("April") # adds an element at the end
+```
+
+### Sets
+- Set items are unordered, unchangeable, and do not allow duplicate values.
+- access elements via loop
+- items cannot be changed, but can be added or removed
+```python
+my_set = {"apple", "banana", "cherry"}
+my_set.add("lemon")    # add an element
+my_set.remove("banana")    # remove an element
+```
+
+### Dictionaries
+- key-value pairs
+```python
+my_dict = {
+    "name": "John",
+    "age": 36
+}
+print(my_dict["name"])
+my_dict["age"] = 40 # change value
+my_dict["city"] = "New York" # add new key-value pair
+
+```
+## Comments
+```python
+# This is a comment
+# Multiline below
+"""
+This is a comment
+written in
+more than just one line
+"""
+```
+
