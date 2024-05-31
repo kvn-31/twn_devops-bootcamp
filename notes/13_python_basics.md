@@ -168,3 +168,31 @@ greeting("seas")
 import datetime
 x = datetime.datetime.now()
 ```
+
+## Third Party Modules
+- need to be installed with a package manager (pip -> included in python installation)
+- pypi - python package index -> repository -> search for packages, community driven
+- module vs package vs library
+  - module: a single python file
+  - package: a collection of modules
+  - library: a collection of packages
+- install a package (in terminal)
+```bash
+pip install pandas
+```
+- use a package
+```python
+import pandas as pd
+```
+- uninstall a package
+```bash
+pip uninstall pandas
+```
+- list installed packages
+```bash
+pip list
+```
+- requirements.txt
+  - list of all packages used in a project
+  - can be installed with `pip install -r requirements.txt`
+  - create with `pip freeze > requirements.txt`
