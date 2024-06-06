@@ -7,8 +7,11 @@ products_per_supplier = {}
 total_value_per_supplier = {}
 products_under_10_inv = {}
 
+# add header for total inventory price
+product_list.cell(1, 5).value = "Total Inventory Price"
 
-for product_row in range(2, product_list.max_row + 1):
+
+for product_row in range(2, product_list.max_row + 1): # spreadsheet starts from 1, so we start from 2 (skipping the header)
     supplier_name = product_list.cell(product_row, 4).value
     inventory = product_list.cell(product_row, 2).value
     price = product_list.cell(product_row, 3).value
