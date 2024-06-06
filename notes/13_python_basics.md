@@ -196,3 +196,31 @@ pip list
   - list of all packages used in a project
   - can be installed with `pip install -r requirements.txt`
   - create with `pip freeze > requirements.txt`
+
+## Object Oriented Programming
+- almost everything in python is an object
+- str(), int() are constructor functions as an example
+```python
+class User:
+    def __init__(self, name, password, job_title, email):
+        self.name = name
+        self.password = password
+        self.job_title = job_title
+        self.email = email
+
+
+    def change_password(self, password):
+        self.password = password
+        print("Password changed successfully")
+
+john = User("John", "1234", "Developer", "john@john.at")
+```
+```python
+# import user
+# 
+# john = user.User("John", "1234", "Developer", "john@john.at")
+
+from user import User
+
+john = User("John", "1234", "Developer", "john@john.at")
+```
