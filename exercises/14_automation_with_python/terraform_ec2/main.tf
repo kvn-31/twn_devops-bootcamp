@@ -133,40 +133,40 @@ resource "aws_instance" "myapp-server" {
 
 }
 
-resource "aws_instance" "myapp-server-three" {
-  ami                         = data.aws_ami.amazon-linux-image.id
-  instance_type               = var.instance_type
-  key_name                    = "myapp-key"
-  associate_public_ip_address = true
-  subnet_id                   = aws_subnet.myapp-subnet-1.id
-  vpc_security_group_ids      = [aws_security_group.myapp-sg.id]
-  availability_zone			      = var.avail_zone
-
-  tags = {
-    Name = "${var.env_prefix}-server-three"
-  }
-
-  user_data = file("entry-script.sh")
-
-  user_data_replace_on_change = true
-
-}
-
-resource "aws_instance" "myapp-server-two" {
-  ami                         = data.aws_ami.amazon-linux-image.id
-  instance_type               = var.instance_type
-  key_name                    = "myapp-key"
-  associate_public_ip_address = true
-  subnet_id                   = aws_subnet.myapp-subnet-1.id
-  vpc_security_group_ids      = [aws_security_group.myapp-sg.id]
-  availability_zone			      = var.avail_zone
-
-  tags = {
-    Name = "${var.env_prefix}-server-two"
-  }
-
-  user_data = file("entry-script.sh")
-
-  user_data_replace_on_change = true
-
-}
+# resource "aws_instance" "myapp-server-three" {
+#   ami                         = data.aws_ami.amazon-linux-image.id
+#   instance_type               = var.instance_type
+#   key_name                    = "myapp-key"
+#   associate_public_ip_address = true
+#   subnet_id                   = aws_subnet.myapp-subnet-1.id
+#   vpc_security_group_ids      = [aws_security_group.myapp-sg.id]
+#   availability_zone			      = var.avail_zone
+#
+#   tags = {
+#     Name = "${var.env_prefix}-server-three"
+#   }
+#
+#   user_data = file("entry-script.sh")
+#
+#   user_data_replace_on_change = true
+#
+# }
+#
+# resource "aws_instance" "myapp-server-two" {
+#   ami                         = data.aws_ami.amazon-linux-image.id
+#   instance_type               = var.instance_type
+#   key_name                    = "myapp-key"
+#   associate_public_ip_address = true
+#   subnet_id                   = aws_subnet.myapp-subnet-1.id
+#   vpc_security_group_ids      = [aws_security_group.myapp-sg.id]
+#   availability_zone			      = var.avail_zone
+#
+#   tags = {
+#     Name = "${var.env_prefix}-server-two"
+#   }
+#
+#   user_data = file("entry-script.sh")
+#
+#   user_data_replace_on_change = true
+#
+# }

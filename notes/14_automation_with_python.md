@@ -47,3 +47,6 @@ new_vpc.create_subnet(
   - gives more control
   - more complex logic can be implemented
   - python allows to do more than just infrastructure provisioning
+
+## Scheduled Tasks
+- popular schedular library is `schedule`
