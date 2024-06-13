@@ -15,5 +15,9 @@ The following tasks are performed in this project:
   - Pre-requisites: create two ec2 instances (one with name dev one with name prod, can be done manually)
   - add same tags to the volumes
   - Goals: 
-    - automatically go through all instances and create a snapshot of the volume
-    - go through all snapshots per volume and only keep the latest 2
+    - automatically go through all instances and create a snapshot of the volume (`volume-backups.py`)
+    - go through all snapshots per volume and only keep the latest 2 (`clean-up-shapshots.py`)
+    - restore the volume from the snapshot (`restore-volume.py`)
+
+## Limitations
+- Errors are not caught/handled
