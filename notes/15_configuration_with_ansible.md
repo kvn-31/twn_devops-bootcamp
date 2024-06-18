@@ -29,6 +29,27 @@
 - one module = one small specific task (like create/copy a file, install a package, ...)
 - modules listed in the [documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html)
 
+### Ansible Collections, Galaxy, and Plugins
+- until version 2.9, all modules were in one big package (ansible)
+- it grew too big and was split into collections -> modularized
+- ansible 2.10+ uses collections
+  - ansible/ansible (ansible-base) = core modules
+  - modules and plugins moved into various collections
+- module vs collection vs plugins
+  - collection = packaging format for bundling ansible content (playbooks, roles, modules, plugins)
+  - collection can be installed independently
+  - all modules are part of a collection -> modules are grouped together in collections
+  - plugins = extensions to ansible functionality
+- community.x shows a collection from the community
+- `ansible-galaxy collection list` = list all installed collections
+- ansible galaxy = the main hub for collections (community)
+  - similar to npm for node.js
+- `ansible-galaxy collection install X` = install a collection
+
+Create own collection
+- for bigger Ansible projects with multiple playbooks, roles, and modules
+- required: galaxy.yml file -> contains metadata
+
 ### Ansible Playbook
 
 - for a complex task we will have multiple modules in a certain sequence grouped together in a playbook
@@ -85,6 +106,9 @@ two.example.com
 10.0.0.1
 ```
 
+### Idempotency
+- a task is idempotent if it can be run multiple times without changing the result
+- most Ansible modules are idempotent
 
 ### Ansible for Docker
 - normally we have a Dockerfile that produces a Docker container
@@ -99,4 +123,71 @@ two.example.com
 - across teams with configured access
 - manage inventory
 
+## Installation
+- control node = machine where Ansible is installed
+- manages target servers
+- windows is not supported as control node
+- two ways to install Ansible
+  - on the local machine
+  - on a remote server
+- mac: `brew install ansible`
+- manjaro linux: `sudo pacman -S ansible`
+- python is a dependency because Ansible is written in python -> ansible can be installed with pip
 
+## Configuration
+- connect to remote servers
+  - create ansible inventory file on host machine
+    - list of target servers
+    - default location `/etc/ansible/hosts` (etc/ansible might need to be created)
+    ```
+    IP ansible_ssh_private_key_file=~/.ssh/PRIVATEKEY ansible_user=root
+    IP ansible_ssh_private_key_file=~/.ssh/PRIVATEKEY ansible_user=root
+    ```
+  - test the connection with `ansible all -i hosts -m ping` (all = all servers, -i = inventory file, -m = module)
+
+## Inventory
+- list of target servers
+- can be grouped
+- ```
+  [webservers]
+  IP ansible_ssh_private_key_file=~/.ssh/PRIVATEKEY ansible_user=root
+  IP ansible_ssh_private_key_file=~/.ssh/PRIVATEKEY ansible_user=root
+  ```
+- vars can be used
+- ```
+  [webservers]
+  IP
+  IP2
+
+  [webservers:vars]
+  ansible_ssh_private_key_file=~/.ssh/PRIVATEKEY
+  ansible_user=root
+  ```
+
+### EC2
+```
+[ec2]
+ec2-3-71-1-186.eu-central-1.compute.amazonaws.com
+ec2-3-76-226-32.eu-central-1.compute.amazonaws.com
+
+[ec2:vars]
+ansible_ssh_private_key_file=~/Downloads/ansible.pem
+ansible_user=ec2-user
+ansible_python_interpreter=/usr/bin/python3.9
+```
+
+### Manage Host Key Checking & SSH Keys
+- allowed servers are stored in `~/.ssh/known_hosts`
+- if a server is not in the list, the connection needs a manual confirmation
+- can be avoided with `/etc/ansible/ansible.cfg` file (alternative location `~/.ansible.cfg`)
+  - `host_key_checking = False`
+  - if the infrastructure is ephemeral (servers are created and destroyed) this is a convenient option
+  - not the biggest security problem, if servers live short
+  - ansible config can also be done per project
+- otherwise these manual steps would need to be done
+  - `ssh-keyscan IP >> ~/.ssh/known_hosts` # add the server to known_hosts
+  - `ssh-copy-id -i ~/.ssh/PRIVATEKEY.pub root@IP` # copy the public key to the server
+
+## Commands
+- `ansible [all/group] -i hosts -m ping` = test connection
+- `ansible IP -i hosts -m ping` = ping by ip

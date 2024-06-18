@@ -683,13 +683,14 @@ DNS Client -> Resolver (typically internet service provider) -> if IP Address no
 
 DNS entries are cached (locally and in resolver)
 
-####Commands
-ifconfig -> computer network details
-netstat -> active connections
-ps aux -> current running applications on ports
-nslookup -> get ip address of any domain name; or reverse -> which domain name is attached to specfic ip address
-ping Domain/IP -> is address accessible?
-
+#### Commands
+```yaml
+ifconfig #computer network details
+netstat #active connections
+ps aux #current running applications on ports -> can be combined with grep to filter
+nslookup #get ip address of any domain name; or reverse -> which domain name is attached to specfic ip address
+ping Domain/IP #is address accessible?
+```
 
 ___
 
@@ -750,6 +751,7 @@ ssh-keygen (might be with arguments such as -t rsa) -> name in next step = file 
 eval $(ssh-agent)
 ssh-add ~/.ssh/PRIVATEKEY
 
-
+### Useful Tools
+- https://launchpad.net/ubuntu -> check for ubuntu packages (f.e. nginx)
 
 
