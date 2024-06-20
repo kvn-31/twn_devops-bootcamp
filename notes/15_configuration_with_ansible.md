@@ -29,6 +29,23 @@
 - one module = one small specific task (like create/copy a file, install a package, ...)
 - modules listed in the [documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html)
 
+General Modules
+- register: store the output of a command
+```yaml
+- name: Ensure app is running
+  shell: ps aux | grep node
+  register: app_status
+```
+- debug: print a message
+```yaml
+- debug: msg={{ app_status.stdout_lines }} #uses app_status from register
+```
+- switch user
+```yaml
+  become: True
+  become_user: nodeapp #switch to nodeapp user before executing tasks
+```
+
 ### Ansible Collections, Galaxy, and Plugins
 - until version 2.9, all modules were in one big package (ansible)
 - it grew too big and was split into collections -> modularized
@@ -109,6 +126,7 @@ two.example.com
 ### Idempotency
 - a task is idempotent if it can be run multiple times without changing the result
 - most Ansible modules are idempotent
+  - command & shell module are not idempotent
 
 ### Ansible for Docker
 - normally we have a Dockerfile that produces a Docker container
@@ -187,6 +205,56 @@ ansible_python_interpreter=/usr/bin/python3.9
 - otherwise these manual steps would need to be done
   - `ssh-keyscan IP >> ~/.ssh/known_hosts` # add the server to known_hosts
   - `ssh-copy-id -i ~/.ssh/PRIVATEKEY.pub root@IP` # copy the public key to the server
+
+## Python vs Ansible
+- in Python we need to check the status before executing a command
+- Ansible and TF handle state checking for us
+- Ansible is easier to write (Yaml)
+
+## Registered Variables
+- store the output of a command in a variable
+- use the variable in a later task
+- example:
+```yaml
+  tasks:
+    - name: Create new user
+      user:
+        name: nodeapp
+        comment: nodeapp admin
+        group: admin #better practice would be do create a new group
+      register: user_creation_result
+    - debug: msg={{ user_creation_result }}
+```
+
+## Parameters using Variables
+- dont use reserved words like `name` or `hosts` as variable names
+- name should always start with a letter
+- dont do things like: linux-name, linux name, linux.name or 13
+- using curly braces (`- debug: msg={{ user_creation_result }}`) to use variables
+- must be quoted to avoid YAML interpretation if it follows a colon -> `src: "{{ file_location }}"`
+- set values for variables:
+  - in the playbook
+    - limitation: only for the playbook, not for the whole project which consists of multiple playbooks
+```yaml
+- name: Deploy nodejs app
+  vars: 
+  version: 1.0.0
+```
+- in the command line
+    - `ansible-playbook -i hosts deploy-node.yaml --extra-vars "version=1.0.0"`
+- external file (yaml syntax, extension can be left out)
+    - vars:
+    ```yaml
+    version: 1.0.0
+    ```
+    - `ansible-playbook -i hosts deploy-node.yaml --extra-vars "@vars"` 
+    - or specify the file in the playbook
+    ```yaml
+    - name: Deploy nodejs app
+      vars_files:
+        - vars
+    ```
+- in the inventory file
 
 ## Commands
 - `ansible [all/group] -i hosts -m ping` = test connection

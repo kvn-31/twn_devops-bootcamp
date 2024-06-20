@@ -1,0 +1,56 @@
+---
+- name: Install node and npm
+  hosts: 157.230.124.111
+  tasks:
+    - name: Update apt repo and cache
+      apt:
+        update_cache: yes
+        force_apt_get: yes #forces using apt-get
+        cache_valid_time: 3600 #cache valid for 1 hour
+    - name: Install nodejs and npm
+      apt:
+        pkg:
+          - nodejs
+          - npm
+
+- name: Create new linux user for node app
+  hosts: 157.230.124.111
+  tasks:
+    - name: Create new user
+      user:
+        name: nodeapp
+        comment: nodeapp admin
+        group: admin #better practice would be do create a new group
+
+
+- name: Deploy nodejs app
+  hosts: 157.230.124.111
+  become: True
+  become_user: nodeapp #switch to nodeapp user before executing tasks
+  vars_files:
+    - project-vars
+  tasks:
+#    - name: Copy nodejs folder to a server
+#      copy:
+#        src: /home/kevinp/Documents/openForceDoku/Bildungskarenz23/DevopsBootcamp/github_repo/twn_devops_bootcamp/demo_projects/15_ansible-deploy_node_js/simple-nodejs-app/nodejs-app-1.0.0.tgz
+#        dest: /root/app-1.0.0.tgz
+    # both in one step
+    - name: Unpack nodejs file
+      unarchive:
+        src: "{{location}}/nodejs-app-{{version}}.tgz"
+        dest: "{{ destination }}"
+#        remote_src: yes #source file is on remote host, not on local machine
+    - name: Install dependencies
+      npm:
+        path: "{{ destination }}/package"
+    - name: Start app
+      command: node server
+      args:
+        chdir: "{{ destination }}/package/app"
+      async: 1000
+      poll: 0
+    - name: Ensure app is running
+      #shell is not the most secure, when available use a module
+      shell: ps aux | grep node
+      register: app_status
+    - debug: msg={{ app_status.stdout_lines }}
