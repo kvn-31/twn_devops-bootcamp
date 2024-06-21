@@ -1,0 +1,92 @@
+---
+- name: Install Java and net-tools
+  hosts: nexus_server
+  tasks:
+    - name: Update apt repo and cache
+      apt:
+        update_cache: yes
+        force_apt_get: yes
+        cache_valid_time: 3600
+    - name: Install Java and net-tools
+      apt:
+        pkg:
+          - openjdk-8-jre-headless
+          - net-tools
+
+- name: Download and unpack Nexus installer
+  hosts: nexus_server
+  tasks:
+    - name: Check if nexus folder already exists
+      stat: path=/opt/nexus
+      register: stat_result
+    - name: Download Nexus
+      get_url:
+          url: https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+          dest: /opt/nexus.tar.gz
+    - name: Unpack Nexus
+      unarchive:
+          src: /opt/nexus.tar.gz
+          dest: /opt
+          remote_src: yes
+      when: not stat_result.stat.exists
+    - name: Find nexus folder
+      find: paths=/opt patterns=nexus-3* file_type=directory
+      register: find_result
+    - name: Rename nexus folder
+      shell: mv {{ find_result.files[0].path }} /opt/nexus
+      when: not stat_result.stat.exists
+
+- name: Create nexus user to own nexus folders
+  hosts: nexus_server
+  tasks:
+    - name: Ensure group nexus exists # if group is present it will do nothing, else it will create it
+      group:
+        name: nexus
+        state: present
+    - name: Create nexus user
+      user:
+        name: nexus
+        group: nexus
+    - name: Make nexus user owner of nexus folder
+      file:
+        path: /opt/nexus
+        state: directory
+        owner: nexus
+        group: nexus
+        recurse: yes
+    - name: Make nexus owner of sonatype folder
+      file:
+        path: /opt/sonatype-work
+        state: directory
+        owner: nexus
+        group: nexus
+        recurse: yes
+
+- name: Start Nexus with nexus user
+  hosts: nexus_server
+  become: yes
+  become_user: nexus
+  tasks:
+    - name: Set run_as to nexus user
+      lineinfile:
+        path: /opt/nexus/bin/nexus.rc
+        regexp: '^run_as_user='
+        line: 'run_as_user="nexus"'
+    - name: Start Nexus
+      command: /opt/nexus/bin/nexus start
+
+- name: Verify nexus is running
+  hosts: nexus_server
+  tasks:
+      - name: Check if Nexus is running with ps
+        shell: ps aux | grep nexus
+        register: nexus_status
+      - debug: msg={{ nexus_status.stdout_lines }}
+      - name: Wait for one minute (that nexus can fully start)
+        pause:
+          minutes: 1
+      - name: Check with netstat
+        shell: netstat -plnt
+        register: netstat_status
+      - debug: msg={{ netstat_status.stdout_lines }}
+

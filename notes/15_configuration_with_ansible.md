@@ -29,7 +29,7 @@
 - one module = one small specific task (like create/copy a file, install a package, ...)
 - modules listed in the [documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html)
 
-General Modules
+Helpful Modules
 - register: store the output of a command
 ```yaml
 - name: Ensure app is running
@@ -45,6 +45,36 @@ General Modules
   become: True
   become_user: nodeapp #switch to nodeapp user before executing tasks
 ```
+- find module
+```yaml
+- name: Find nexus folder
+  find: paths=/opt patterns=nexus-3* file_type=directory
+  register: find_result
+```
+- blockinfile
+```yaml
+- name: Set run_as to nexus user
+  blockinfile: # blockinfile module is used to add a block of text to a file
+    path: /opt/nexus/bin/nexus.rc
+    block: | # block of text
+      run_as_user="nexus"
+```
+- lineinfile
+```yaml
+- name: Set run_as to nexus user
+  lineinfile: #replace a line in a file
+    path: /opt/nexus/bin/nexus.rc
+    regexp: '^run_as_user='
+    line: 'run_as_user="nexus"'
+```
+- pause (wait for amount of time)
+```yaml
+- name: Wait for nexus to start
+  pause:
+    minutes: 1
+```
+- wait_for (wait for something to happen/complete)
+
 
 ### Ansible Collections, Galaxy, and Plugins
 - until version 2.9, all modules were in one big package (ansible)
@@ -162,6 +192,9 @@ two.example.com
     IP ansible_ssh_private_key_file=~/.ssh/PRIVATEKEY ansible_user=root
     ```
   - test the connection with `ansible all -i hosts -m ping` (all = all servers, -i = inventory file, -m = module)
+- a hosts file can also be set as default in the ansible.cfg file
+  - `inventory = /etc/ansible/hosts` in the `[defaults]` section of ansible config
+  - normally each project has its own ansible config file
 
 ## Inventory
 - list of target servers
@@ -255,6 +288,18 @@ ansible_python_interpreter=/usr/bin/python3.9
         - vars
     ```
 - in the inventory file
+
+## Conditionals
+- use `when` to execute a task only if a condition is met
+- example:
+```yaml
+- name: Check if nexus folder already exists
+  stat: path=/opt/nexus
+  register: stat_result
+- name: Rename nexus folder
+  shell: mv {{ find_result.files[0].path }} /opt/nexus
+  when: not stat_result.stat.exists
+```
 
 ## Commands
 - `ansible [all/group] -i hosts -m ping` = test connection
