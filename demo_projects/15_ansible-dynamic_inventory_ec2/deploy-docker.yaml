@@ -1,0 +1,20 @@
+---
+#- name: Install Python3 on server
+#  hosts: docker_server
+#  become: yes # Run as root (become_user by default is root)
+#  tasks:
+#    - name: Install Python3
+#      yum:
+#        name: python3
+#        state: present
+#        update_cache: yes
+
+- name: Install docker
+  hosts: docker_server
+  become: yes # Run as root (become_user by default is root)
+  tasks:
+    - name: Install docker
+      yum:
+        name: docker
+        update_cache: yes
+

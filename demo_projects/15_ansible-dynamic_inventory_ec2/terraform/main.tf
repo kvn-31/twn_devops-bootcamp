@@ -122,7 +122,7 @@ resource "aws_key_pair" "ssh-key" {
 }
 
 resource "aws_instance" "myapp-server" {
-  ami                    = "ami-04f1b917806393faa" #operating system image
+  ami                    = data.aws_ami.latest-amazon-linux-image.id #operating system image
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.myapp-subnet-1.id
   vpc_security_group_ids = [aws_default_security_group.default-sg.id]
@@ -136,3 +136,32 @@ resource "aws_instance" "myapp-server" {
   }
 }
 
+resource "aws_instance" "myapp-server-two" {
+  ami                    = data.aws_ami.latest-amazon-linux-image.id #operating system image
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.myapp-subnet-1.id
+  vpc_security_group_ids = [aws_default_security_group.default-sg.id]
+  availability_zone      = var.avail_zone
+
+  associate_public_ip_address = true #to be able to access it from the internet (browser, ssh)
+  key_name                    = aws_key_pair.ssh-key.key_name
+
+  tags                        = {
+    Name : "${var.env_prefix}-server-two"
+  }
+}
+
+resource "aws_instance" "myapp-server-three" {
+  ami                    = data.aws_ami.latest-amazon-linux-image.id #operating system image
+  instance_type          = "t2.small"
+  subnet_id              = aws_subnet.myapp-subnet-1.id
+  vpc_security_group_ids = [aws_default_security_group.default-sg.id]
+  availability_zone      = var.avail_zone
+
+  associate_public_ip_address = true #to be able to access it from the internet (browser, ssh)
+  key_name                    = aws_key_pair.ssh-key.key_name
+
+  tags                        = {
+    Name : "${var.env_prefix}-server-three"
+  }
+}

@@ -1,0 +1,77 @@
+---
+- name: Install docker, docker-compose and start docker daemon
+  hosts: docker_server
+  become: yes # Run as root (become_user by default is root)
+  tasks:
+    - name: Install docker and python3-pip
+      ansible.builtin.yum:
+        name:
+          - docker
+          - python3-pip
+        state: present
+        update_cache: yes
+        allow_downgrade: yes
+#    - name: Install docker-compose
+#      get_url:
+#        url: "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-{{lookup('pipe', 'uname -m')}}"
+#        dest: /usr/local/bin/docker-compose
+#        mode: +x
+    - name: Start docker daemon
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+    - name: Add ec2-user to docker group
+      ansible.builtin.user:
+        name: ec2-user
+        groups: docker
+        append: yes # Add user to group without removing from other groups
+    - name: Reconnect to server session # Reconnect to server session to apply group changes
+      meta: reset_connection
+
+# own play because it needs to be run as ec2-user, will fail if run as root
+- name: Install docker & docker compose python module
+  hosts: docker_server
+  tasks:
+    - name: Install docker & docker compose python module
+      ansible.builtin.pip:
+        name:
+          - docker
+          - docker-compose
+
+- name: Install docker compose plugin
+  hosts: docker_server
+  tasks:
+    - name: set DOCKER_CONFIG environment variable
+      ansible.builtin.set_fact:
+        DOCKER_CONFIG: /home/ec2-user/.docker
+    - name: Create docker cli plugins directory
+      ansible.builtin.file:
+        # mkdir -p ~/.docker/cli-plugins
+       path: "{{DOCKER_CONFIG}}/cli-plugins"
+       state: directory
+    - name: Install docker-compose
+      get_url:
+         url: "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-{{lookup('pipe', 'uname -m')}}"
+         dest: "{{DOCKER_CONFIG}}/cli-plugins/docker-compose"
+         mode: +x
+
+- name: Start docker containers
+  hosts: docker_server
+  vars_files:
+    - project-vars
+  tasks:
+    - name: Copy docker compose file
+      ansible.builtin.copy:
+          src: /home/kevinp/Documents/openForceDoku/Bildungskarenz23/DevopsBootcamp/github_repo/twn_devops_bootcamp/demo_projects/15_ansible-docker/docker-compose-full.yaml
+          dest: /home/ec2-user/docker-compose.yaml
+    - name: Docker login to pull from private registry
+      ansible.builtin.docker_login:
+        registry_url: https://index.docker.io/v1/
+        username: "{{docker_username}}"
+        password: "{{docker_password}}"
+    - name: Start container from compose
+      community.docker.docker_compose_v2:
+        project_src: /home/ec2-user
+        state: present # docker compose up, is default
+
+

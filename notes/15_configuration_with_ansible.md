@@ -92,6 +92,10 @@ Helpful Modules
 - ansible galaxy = the main hub for collections (community)
   - similar to npm for node.js
 - `ansible-galaxy collection install X` = install a collection
+- FQCN = Fully Qualified Collection Name -> community.docker.docker_image as an example
+  - for built-in modules, the collection is ansible.builtin but can be omitted because it is the default namespace
+  - apt vs ansible.builtin.apt
+  - it is still preferred to use the FQCN
 
 Create own collection
 - for bigger Ansible projects with multiple playbooks, roles, and modules
@@ -195,6 +199,19 @@ two.example.com
 - a hosts file can also be set as default in the ansible.cfg file
   - `inventory = /etc/ansible/hosts` in the `[defaults]` section of ansible config
   - normally each project has its own ansible config file
+
+## Dynamic Expression in Strings
+```yaml
+    - name: Install docker-compose
+      get_url:
+        url: "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-{{lookup('pipe', 'uname -m')}}"
+        dest: ~/.docker/cli-plugins/docker-compose
+        mode: +x
+```
+
+## Jinja 2 Templating
+- used in Ansible to create dynamic content
+`url: "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-{{lookup('pipe', 'uname -m')}}"`
 
 ## Inventory
 - list of target servers
@@ -301,6 +318,27 @@ ansible_python_interpreter=/usr/bin/python3.9
   when: not stat_result.stat.exists
 ```
 
+## Dynamic Inventory
+- instead of manually adding servers to the inventory file, we can use a dynamic inventory
+- can be used with cloud providers like AWS, Azure, ...
+- this can be done using
+  - dynamic inventory scripts
+  - plugins (preferred)
+- see the example in the demo_projects folder
+
+## Password/Credentials
+The following simpler ways exist:
+- vars file
+- use pw prompt
+```yaml
+  vars_prompt:
+    - name: docker_password
+      prompt: "Enter your docker password"
+      private: yes
+```
+
 ## Commands
 - `ansible [all/group] -i hosts -m ping` = test connection
 - `ansible IP -i hosts -m ping` = ping by ip
+- `ansible-playbook -i hosts playbook.yaml` = run playbook
+- `ansible-playbook playbook.yaml -vv` = verbose output
