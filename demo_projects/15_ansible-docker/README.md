@@ -17,4 +17,5 @@ The following steps are covered in this demo project:
 
 ## Differences to the course
 - amazon linux 2023 changed and removed python2, replaced it with python3 (see [documentation](https://docs.aws.amazon.com/linux/al2023/ug/python.html))
-- -> some of the plays in the playbook are not needed anymore / need to be adapted 
+- -> some of the plays in the playbook are not needed anymore / need to be adapted
+- also docker-compose v1 is outdated and replaced with the docker compose v2 plugin
