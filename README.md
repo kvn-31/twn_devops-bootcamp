@@ -6,6 +6,3 @@ This project consists of:
 - Demo Projects
 - Notes (they were written during the course and are neither complete nor perfect)
 - Smaller helpers/scripts used during the course in the exercises
-
-## Demo Projects
-- [10_kubernetes](https://github.com/kvn-31/twn_devops-bootcamp/tree/main/demo_projects/10_kubernets/demo_project)
