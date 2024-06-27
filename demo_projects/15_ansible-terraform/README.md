@@ -1,7 +1,7 @@
 # Ansible and Terraform
 
 This project is an extension to [Ansible-docker](..%2F15_ansible-docker%2FREADME.md).
-In the main.tf we are executing the ansible commands using the `local-exec` provisioner. This can lead to timing issues and is not always recommended. To avoid the problem that  the ec2 server is not ready, yet we added a play in Ansible that waits for the server to be ready.
+In the main.tf we are executing the ansible commands using the `local-exec` provisioner. This can lead to timing issues and is not always recommended. To avoid the problem that  the ec2 server is not ready, yet we added a play in Ansible that waits for the server to be ready. In addition, a null-resource is used in the terraform file. This can be omitted and the provisioner can be directly added to the aws_instance resource. The benefit is that it would work for multiple servers as well. Another benefit is using `triggers` -> whenever the server is recreated the provisioner will be executed again.
 
 This also means we do not need the hosts file in the ansible directory anymore as we are passing the ip address of the freshly created instance to the ansible-playbook command.
 Also, the hosts attribute is set to all in the playbook file for simplification.

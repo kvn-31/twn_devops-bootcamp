@@ -13,7 +13,7 @@ variable private_key_location {}
 
 resource "aws_vpc" "myapp-vpc" {
   cidr_block = var.vpc_cidr_block
-  tags       = {
+  tags = {
     Name : "${var.env_prefix}-vpc"
   }
 }
@@ -23,14 +23,14 @@ resource "aws_subnet" "myapp-subnet-1" {
   vpc_id            = aws_vpc.myapp-vpc.id
   cidr_block        = var.subnet_cidr_block
   availability_zone = var.avail_zone
-  tags              = {
+  tags = {
     Name : "${var.env_prefix}-subnet-1"
   }
 }
 
 resource "aws_internet_gateway" "myapp-igw" {
   vpc_id = aws_vpc.myapp-vpc.id
-  tags   = {
+  tags = {
     Name : "${var.env_prefix}-igw"
   }
 }
@@ -51,7 +51,7 @@ resource "aws_default_security_group" "default-sg" {
 
   # ingress for incoming traffic like ssh, access from browser
   ingress {
-    from_port   = 22 #it is a range -> we only allow 22 for ssh
+    from_port = 22 #it is a range -> we only allow 22 for ssh
     to_port     = 22
     protocol    = "TCP"
     cidr_blocks = [var.my_ip] #who is allowed to access
@@ -66,10 +66,10 @@ resource "aws_default_security_group" "default-sg" {
 
   # egress for outgoing traffic, for installation, fetch images, etc
   egress {
-    from_port       = 0 #any port
+    from_port = 0 #any port
     to_port         = 0
-    protocol        = "-1" #any protocol
-    cidr_blocks     = ["0.0.0.0/0"] #any ip
+    protocol = "-1" #any protocol
+    cidr_blocks = ["0.0.0.0/0"] #any ip
     prefix_list_ids = []
   }
 
@@ -106,22 +106,29 @@ resource "aws_key_pair" "ssh-key" {
 }
 
 resource "aws_instance" "myapp-server" {
-  ami                    = "ami-04f1b917806393faa" #operating system image, currently hard-coded, can be dynamic using aws_ami_id
+  ami = "ami-04f1b917806393faa" #operating system image, currently hard-coded, can be dynamic using aws_ami_id
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.myapp-subnet-1.id
   vpc_security_group_ids = [aws_default_security_group.default-sg.id]
   availability_zone      = var.avail_zone
 
   associate_public_ip_address = true #to be able to access it from the internet (browser, ssh)
-  key_name                    = aws_key_pair.ssh-key.key_name
+  key_name = aws_key_pair.ssh-key.key_name
 
-  tags                        = {
+  tags = {
     Name : "${var.env_prefix}-server"
   }
+}
 
+resource "null_resource" "configure_server" {
+  # whenever the myapp-server instance is created, this null resource will be triggered
+  triggers = {
+    instance_id = aws_instance.myapp-server.public_ip
+  }
+  # execute the ansible command on the local machine
   provisioner "local-exec" {
     working_dir = "/home/kevinp/Documents/openForceDoku/Bildungskarenz23/DevopsBootcamp/github_repo/twn_devops_bootcamp/demo_projects/15_ansible-terraform/"
-    command = "ansible-playbook --inventory ${self.public_ip}, --private-key ${var.private_key_location} --user ec2-user deploy-docker-new-user.yaml"
+    command     = "ansible-playbook --inventory ${aws_instance.myapp-server.public_ip}, --private-key ${var.private_key_location} --user ec2-user deploy-docker-new-user.yaml"
   }
 }
 

@@ -340,6 +340,24 @@ The following simpler ways exist:
 ## Terraform and Ansible
 - Terraform can be used to create the infrastructure and then use Ansible to configure it
 
+```tf
+resource "aws_instance" "myapp-server" {
+  # ...
+}
+
+resource "null_resource" "configure_server" {
+  # whenever the myapp-server instance is created, this null resource will be triggered
+  triggers = {
+    instance_id = aws_instance.myapp-server.public_ip
+  }
+  # execute the ansible command on the local machine
+  provisioner "local-exec" {
+    working_dir = "PATH"
+    command     = "ansible-playbook --inventory ${aws_instance.myapp-server.public_ip}, --private-key ${var.private_key_location} --user ec2-user deploy-docker-new-user.yaml"
+  }
+}
+```
+
 ## Commands
 - `ansible [all/group] -i hosts -m ping` = test connection
 - `ansible IP -i hosts -m ping` = ping by ip
