@@ -337,6 +337,9 @@ The following simpler ways exist:
       private: yes
 ```
 
+## Terraform and Ansible
+- Terraform can be used to create the infrastructure and then use Ansible to configure it
+
 ## Commands
 - `ansible [all/group] -i hosts -m ping` = test connection
 - `ansible IP -i hosts -m ping` = ping by ip
