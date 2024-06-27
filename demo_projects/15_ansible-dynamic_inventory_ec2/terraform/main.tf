@@ -12,6 +12,7 @@ variable public_key_location {}
 
 resource "aws_vpc" "myapp-vpc" {
   cidr_block = var.vpc_cidr_block
+  enable_dns_hostnames = true
   tags       = {
     Name : "${var.env_prefix}-vpc"
   }
@@ -26,23 +27,6 @@ resource "aws_subnet" "myapp-subnet-1" {
     Name : "${var.env_prefix}-subnet-1"
   }
 }
-
-# commented, now we use the default route table
-/*resource "aws_route_table" "myapp-route-table" {
-  vpc_id = aws_vpc.myapp-vpc.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.myapp-igw.id
-  }
-  tags = {
-    Name : "${var.env_prefix}-rtb"
-  }
-}*/
-#resource "aws_route_table_association" "a-rtb-subnet" {
-#  subnet_id      = aws_subnet.myapp-subnet-1.id
-#  route_table_id = aws_route_table.myapp-route-table.id
-#}
 
 resource "aws_internet_gateway" "myapp-igw" {
   vpc_id = aws_vpc.myapp-vpc.id
@@ -100,7 +84,8 @@ data "aws_ami" "latest-amazon-linux-image" {
   owners      = ["amazon"]
   filter {
     name   = "name"
-    values = ["amzn2-ami-kernel-*-x86_64-gp2"]
+    values = ["al2023-ami-2023.*-kernel-*-x86_64"] # switched to amazon linux 2023 because it has python pre-installed
+#     values = ["amzn2-ami-kernel-*-x86_64-gp2"] # course version, amazon linux 2
   }
   filter {
     name   = "virtualization-type"
@@ -132,7 +117,7 @@ resource "aws_instance" "myapp-server" {
   key_name                    = aws_key_pair.ssh-key.key_name
 
   tags                        = {
-    Name : "${var.env_prefix}-server"
+    Name : "dev-server"
   }
 }
 
@@ -147,7 +132,7 @@ resource "aws_instance" "myapp-server-two" {
   key_name                    = aws_key_pair.ssh-key.key_name
 
   tags                        = {
-    Name : "${var.env_prefix}-server-two"
+    Name : "dev-server"
   }
 }
 
@@ -162,6 +147,6 @@ resource "aws_instance" "myapp-server-three" {
   key_name                    = aws_key_pair.ssh-key.key_name
 
   tags                        = {
-    Name : "${var.env_prefix}-server-three"
+    Name : "prod-server" # hard-coded to test filtering in aws_ec2 ansible plugin
   }
 }

@@ -325,6 +325,11 @@ ansible_python_interpreter=/usr/bin/python3.9
   - dynamic inventory scripts
   - plugins (preferred)
 - see the example in the demo_projects folder
+- the ssh-key and user can be set in the ansible.cfg file
+```
+remote_user = ec2-user
+private_key_file = ~/.ssh/MYKEY
+```
 
 ## Password/Credentials
 The following simpler ways exist:
@@ -363,3 +368,5 @@ resource "null_resource" "configure_server" {
 - `ansible IP -i hosts -m ping` = ping by ip
 - `ansible-playbook -i hosts playbook.yaml` = run playbook
 - `ansible-playbook playbook.yaml -vv` = verbose output
+- `ansible-playbook -i inventory_aws_ec2.yaml deploy-docker-new-user.yaml` = run playbook with dynamic inventory
+- `ansible-inventory -i inventory_aws_ec2.yaml --graph` = show inventory graph
