@@ -344,7 +344,7 @@ The following simpler ways exist:
 
 ## Terraform and Ansible
 - Terraform can be used to create the infrastructure and then use Ansible to configure it
-
+- see the example in the demo_projects folder
 ```tf
 resource "aws_instance" "myapp-server" {
   # ...
