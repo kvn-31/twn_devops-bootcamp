@@ -405,6 +405,20 @@ ansible-playbook deploy-docker-new-user.yaml --extra-vars "ansible_python_interp
 ```
 - or in the inventory file
 
+## Ansible in Jenkins Pipeline
+- before: for each tool we wanted to execute in the pipeline we had to install the tool on the Jenkins server / container
+- for Ansible: we use a dedicated server for Ansible (common practice)
+- in short, the steps were:
+  - create droplet for jenkins
+  - create droplet for ansible
+    - install ansible on server
+  - create two ec2 instances (which will then be modified using ansible)
+  - store keys for ec2 instances and for ansible server in jenkins
+  - in jenkinsfile:
+    - copy ansible files and the key for the ec2 instances to the ansible server
+    - execute ansible playbook on the ansible server
+- see Java-Maven-App project feature/ansible for more details (such as Jenkinsfile)
+
 ## Commands
 - `ansible [all/group] -i hosts -m ping` = test connection
 - `ansible IP -i hosts -m ping` = ping by ip
