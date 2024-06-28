@@ -200,3 +200,14 @@ withKubeConfig([credentialsId: 'linode-kubeconfig', serverUrl: ENDPOINT]) {
 - adjust building and tagging of the image in Jenkinsfile
 - create secret for k8s to pull from ecr
   - 
+
+## Troubleshooting
+- After creating an EKS cluster with Terraform (see Terraform section), i had the problem that i could not connect to the cluster with kubectl. The error message was `error: You must be logged in to the server (Unauthorized)`.
+- No idea why and this is definitely not recommended, but i ended up navigating to the cluster in AWS management console. There was a message that my user had no access so I created an IAM ACCESS entry for my user.
+`arn:aws:iam::AWSACCOUNTID:user/USERNAME` -> appended AmazonEKSAdminPolicy, AmazonEKSAdminViewPolicy, AmazonEKSClusterAdminPolicy, AmazonEKSViewPolicy and now it is working.
+	
+before i had the following errors:
+- `Error from server (Forbidden): pods is forbidden: User "..." cannot list resource "pods" in API group "" in the namespace "default"`
+- `couldn't get current server API group list: the server has asked for the client to provide credentials`
+
+[this article](https://www.javierinthecloud.com/enable-an-iam-user-or-iam-role-to-access-an-eks-cluster/) might be helpful, although it is weird that in this case the cluster creator had no access to the cluster.

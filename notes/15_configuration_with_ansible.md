@@ -363,6 +363,48 @@ resource "null_resource" "configure_server" {
 }
 ```
 
+## Ansible and K8s
+- Automate deployment into K8s clusters
+- example setup
+  - use terraform to spin up the K8s cluster (in AWS)
+  - use Ansible to connect to the K8s cluster and deploy the app
+- kubernetes.core.k8s module can be used
+  - basically as both share YAML syntax, the same content can be used for k8s and Ansible
+- a simple example
+```yaml
+---
+- name: Deploy application in new namespace
+  hosts: localhost # executing locally, connecting to remote cluster
+  tasks:
+    - name: Create a k8s namespace
+      kubernetes.core.k8s:
+#        kubeconfig: ... by default it will use ~/.kube/config, which is the default location for kubeconfig
+        name: my-app
+        api_version: v1
+        kind: Namespace
+        state: present
+```
+
+## Python and Ansible Modules
+- Ansible modules are written in Python
+- often, dependencies need to be installed
+- the best way to achieve this (especially on Linux) is to use a virtual environment
+```bash
+python3 -m venv .venv #creates a virtual environment
+source .venv/bin/activate #activates the virtual environment
+# pip3 install ...
+```
+- to assure ansible is using the right (local) python interpreter, the following command can be used
+```bash
+ansible-playbook deploy-docker-new-user.yaml --extra-vars "ansible_python_interpreter=/path/to/python"
+```
+- this can also be done using vars in the playbook
+```yaml
+  vars:
+    ansible_python_interpreter: ./.venv/bin/python
+```
+- or in the inventory file
+
 ## Commands
 - `ansible [all/group] -i hosts -m ping` = test connection
 - `ansible IP -i hosts -m ping` = ping by ip

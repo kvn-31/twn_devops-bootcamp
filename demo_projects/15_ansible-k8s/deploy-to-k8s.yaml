@@ -1,0 +1,20 @@
+---
+- name: Deploy application in new namespace
+  hosts: localhost # executing locally, connecting to remote cluster
+  # set variables
+  vars:
+    ansible_python_interpreter: ./.venv/bin/python
+  tasks:
+    - name: Create a k8s namespace
+      kubernetes.core.k8s:
+#        kubeconfig: ... by default it will use ~/.kube/config, which is the default location for kubeconfig
+        name: my-app
+        api_version: v1
+        kind: Namespace
+        state: present
+    - name: Deploy nginx app
+      kubernetes.core.k8s:
+        src: ./nginx-config.yaml
+        state: present # use state absent to delete
+#        kubeconfig: ~/.kube/config
+        namespace: my-app
