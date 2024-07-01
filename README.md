@@ -9,3 +9,9 @@ This project consists of:
 
 ## Demo Projects
 - [10_kubernetes](https://github.com/kvn-31/twn_devops-bootcamp/tree/main/demo_projects/10_kubernets/demo_project)
+
+## Java-Maven-App repo
+coming soon
+
+## Course Roadmap
+coming soon

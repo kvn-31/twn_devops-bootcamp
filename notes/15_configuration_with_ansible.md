@@ -411,13 +411,30 @@ ansible-playbook deploy-docker-new-user.yaml --extra-vars "ansible_python_interp
 - in short, the steps were:
   - create droplet for jenkins
   - create droplet for ansible
-    - install ansible on server
+    - install ansible on server OR do it in jenkins pipeline
   - create two ec2 instances (which will then be modified using ansible)
   - store keys for ec2 instances and for ansible server in jenkins
   - in jenkinsfile:
     - copy ansible files and the key for the ec2 instances to the ansible server
     - execute ansible playbook on the ansible server
 - see Java-Maven-App project feature/ansible for more details (such as Jenkinsfile)
+
+## Ansible Roles
+- a way to organize playbooks, especially when they get bigger
+- group content in roles
+- to easily reuse and share with others
+- break up playbooks into smaller parts
+- a role: ~ a package for tasks
+- multiple plays can then use the role
+- a role consists of
+  - tasks
+  - static files
+  - vars -> parameterize the role, default vars can be overwritten
+  - custom modules
+- standard file structure, easy to maintain and reuse
+  - see [documentation](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html)
+- there are also community roles, can be found on ansible galaxy and git repositories
+- 
 
 ## Commands
 - `ansible [all/group] -i hosts -m ping` = test connection
