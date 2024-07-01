@@ -1,0 +1,13 @@
+- name: Copy docker compose file
+  ansible.builtin.copy:
+    src: docker-compose.yaml #ansible will look for this file in the files directory of the role
+    dest: /home/new-user/docker-compose.yaml
+- name: Docker login to pull from private registry
+  ansible.builtin.docker_login:
+    registry_url: "{{docker_registry}}"
+    username: "{{docker_username}}"
+    password: "{{docker_password}}"
+- name: Start container from compose
+  community.docker.docker_compose_v2:
+    project_src: /home/new-user
+    state: present # docker compose up, is default

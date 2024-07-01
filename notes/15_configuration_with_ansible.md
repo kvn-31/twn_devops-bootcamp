@@ -305,6 +305,8 @@ ansible_python_interpreter=/usr/bin/python3.9
         - vars
     ```
 - in the inventory file
+- there is a defined order in which variables are loaded -> see variable precedence
+
 
 ## Conditionals
 - use `when` to execute a task only if a condition is met
@@ -434,7 +436,40 @@ ansible-playbook deploy-docker-new-user.yaml --extra-vars "ansible_python_interp
 - standard file structure, easy to maintain and reuse
   - see [documentation](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html)
 - there are also community roles, can be found on ansible galaxy and git repositories
-- 
+- example of Ansible yaml
+```yaml
+- name: Create new linux user
+  hosts: all
+  become: yes
+  roles:
+    - role: create_user #ansible automatically looks for a role with this name in roles directory
+```
+- role: (main.yaml sits in roles/create_user/tasks)
+```yaml
+- name: Create new linux user
+  user:
+    name: new-user
+    groups: adm,docker
+```
+
+### Files in Roles
+- need to be located in roles/ROLENAME/files
+- can be referenced in main.yaml of role
+```yaml
+- name: Copy docker compose file
+  ansible.builtin.copy:
+    src: docker-compose.yaml #ansible will look for this file in the files directory of the role -> roles/ROLENAME/files
+    dest: /home/new-user/docker-compose.yaml
+```
+
+### Variables in Roles
+- in roles/ROLENAME/vars/main.yaml
+- there is a defined order in which variables are loaded -> see variable precedence
+- values provided by the command line are the highest priority, but second is already the defined variable in the role
+
+### Defaults in Roles
+- in roles/ROLENAME/defaults/main.yaml
+- these are the default values for the variables, can be overwritten by vars
 
 ## Commands
 - `ansible [all/group] -i hosts -m ping` = test connection
