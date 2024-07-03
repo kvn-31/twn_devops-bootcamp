@@ -155,6 +155,9 @@ kubectl delete -f nginx-deployment.yaml #by file
 kubectl logs NAME #log to console
 kubectl describe pod NAME #info about pod
 
+# port forwarding
+kubectl port-forward service/monitoring-kube-prometheus-prometheus 9090:9090 -n monitoring
+kubectl port-forward service/monitoring-kube-prometheus-prometheus 9090:9090 -n monitoring & #run in background
 
 # interactive terminal inside pod
 kubectl exec -it NAME -- /bin/bash #alternatively use /bin/sh

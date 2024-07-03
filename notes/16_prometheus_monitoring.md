@@ -103,3 +103,54 @@ There are various ways to deploy Prometheus in a Kubernetes cluster:
 - in simples words: out of the box monitoring solution for K8s cluster
 - worker nodes and k8s components are monitored
 
+## Prometheus UI
+- Prometheus has its own web UI
+- quite simplistic
+- using the Helm chart it can be viewed using port forwarding
+- `kubectl port-forward service/monitoring-kube-prometheus-prometheus 9090:9090 -n monitoring`
+- low level, for debugging and troubleshooting
+
+## Prometheus Definitions
+- instance = an endpoint that exposes metrics
+- job = a collection of instances
+
+## Grafana
+- data visualization tool
+- open source
+- using the helm chart, Grafana is also deployed
+  - `kubectl port-forward service/monitoring-grafana 8080:80 -n monitoring &`
+  - default login: admin/prom-operator
+- dashboard is a set of panels, organized in rows and columns
+- custom dashboards can be created, the Helm chart comes with pre-configured dashboards
+- each panel can be edited -> for example to use PromQL queries
+
+### Users
+- teams and users can be created/deffined in Grafana
+
+### How does Grafana talk to Prometheus?
+- is defined in Datasources tab, data source added by Helm chart
+- Grafana supports multiple data sources/data bases/monitoring tools
+
+
+## Alert Rules
+- we won't watch the Prometheus UI/Grafana all the time -> we need alerts
+- alerting is separated in two parts
+  - alerting rules: define when an alert should be triggered
+  - alert manager: sending notifications: define how to send the alert
+- example of an alert
+```
+name: AlertmanagerFailedReload
+expr: max_over_time(alertmanager_config_last_reload_successful{job="monitoring-kube-prometheus-alertmanager",namespace="monitoring"}[5m]) == 0
+for: 10m
+labels:
+severity: critical
+annotations:
+description: Configuration has failed to load for {{ $labels.namespace }}/{{ $labels.pod}}.
+runbook_url: https://runbooks.prometheus-operator.dev/runbooks/alertmanager/alertmanagerfailedreload
+summary: Reloading an Alertmanager configuration has failed.
+```
+  - name: name of the alert
+  - expr: PromQL expression that defines when the alert should be triggered
+  - for: how long the condition must be true before the alert is triggered
+  - labels: key-value pairs that are attached to the alert (f.e. severity)
+  - annotations: key-value pairs that are attached to the alert and are used for notifications
