@@ -149,8 +149,19 @@ description: Configuration has failed to load for {{ $labels.namespace }}/{{ $la
 runbook_url: https://runbooks.prometheus-operator.dev/runbooks/alertmanager/alertmanagerfailedreload
 summary: Reloading an Alertmanager configuration has failed.
 ```
-  - name: name of the alert
-  - expr: PromQL expression that defines when the alert should be triggered
-  - for: how long the condition must be true before the alert is triggered
-  - labels: key-value pairs that are attached to the alert (f.e. severity)
-  - annotations: key-value pairs that are attached to the alert and are used for notifications
+- name: name of the alert
+- expr: PromQL expression that defines when the alert should be triggered
+- for: how long the condition must be true before the alert is triggered
+  - alert will be in pending state until the condition is true for the defined time (might heal itself)
+- labels: key-value pairs that are attached to the alert (f.e. severity)
+  - different rules can be grouped by labels -> f.e. to differentiate between critical and warning alerts, which application the alert is for, ...
+- annotations: key-value pairs that are attached to the alert and are used for notifications
+  - description: detailed description of the alert
+  - runbook_url: link to a runbook that describes how to handle the alert
+  - summary: short description of the alert
+
+### Add custom alert rules to Prometheus Operator (using Helm Chart)
+- Prometheus operator extends Kubernetes API with custom resources
+- Operator takes our custom resource and tells Prometheus to reload the alerting rules
+- create a Rule, see [documentation](https://docs.openshift.com/container-platform/4.10/rest_api/monitoring_apis/prometheusrule-monitoring-coreos-com-v1.html)
+- check `16_prometheus-demo` for more details

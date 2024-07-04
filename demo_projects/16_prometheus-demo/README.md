@@ -10,7 +10,8 @@ Already existing alert rules (navigate to Prometheus UI -> Alerts -> Rules):
 
 Alert rules to be added:
 - CPU > 50%
-- 
+- when a Pod cannot start
+They can be found in the `alert-rules.yaml` file.
 
 ## Prerequisites
 - EKS cluster
@@ -33,7 +34,7 @@ Alert rules to be added:
 - `kubectl port-forward service/monitoring-kube-prometheus-prometheus 9090:9090 -n monitoring &` to access Prometheus UI
 - `kubectl port-forward service/monitoring-grafana 8080:80 -n monitoring &` to access Grafana UI (default credentials: admin/prom-operator)
 - `kubectl run curl-test --image=radial/busyboxplus:curl -i --tty --rm` to add a pod which will 
-- to test the visualization etc under load it is an option to run the following
+- to test the visualization under load it is an option to run the following
   - `kubectl run curl-test --image=radial/busyboxplus:curl -i --tty --rm`
   - `vi test.sh` and add the following to curl the loadbalancer
     ```bash
@@ -42,7 +43,13 @@ Alert rules to be added:
     done
     ```
   - `chmod +x test.sh` make the script executable
+- `kubectl apply -f alert-rules.yaml` to add alert rules
+- `kubectl get PrometheusRule -n monitoring` to check if the alert rules are added
 
+## Test Alert Rules
+- to simulate a high CPU load we will use [containerstack/cpustress dockerhub image](https://hub.docker.com/r/containerstack/cpustress)
+  - `kubectl run cpu-test --image=containerstack/cpustress -- --cpu 4 --timeout 30s --metrics-brief` -> the `--` is used to pass arguments to the container, `cpu-test` is the name we gave the pod
 
 ## Files
 - this project consists of various .yaml files that are used to deploy the shopping example application. They are quite similar, but only the `config-loadbalancer.yaml` is used to deploy the application.
+- `alert-rules.yaml` contains the alert rules that are added to Prometheus
