@@ -8,10 +8,15 @@ Already existing alert rules (navigate to Prometheus UI -> Alerts -> Rules):
 - most of them are for the Prometheus stack itself
 - most of them are inactive or condition not met
 
-Alert rules to be added:
+Alert rules that were added:
 - CPU > 50%
 - when a Pod cannot start
 They can be found in the `alert-rules.yaml` file.
+
+Also, an alert manager configuration was added to send alerts via email. The configuration can be found in the `alert-manager-configuration-base.yaml` file (email needs to be replaced). For this, also a secret was created, see `email-secret-template.yaml`.
+
+To be able to monitor redis (3rd party) the [redis-exporter](https://github.com/oliver006/redis_exporter) is used. It is deployed using the `redis-exporter.yaml` file.
+
 
 ## Prerequisites
 - EKS cluster
@@ -51,7 +56,10 @@ They can be found in the `alert-rules.yaml` file.
 
 ### Add alert receivers
 - `kubectl apply -f email-secret.yaml` to add the email secret (base64 encoded password, do not check in)
-- `kubectl apply -f alert-manager-configuration.yaml` to add the alert manager configuration
+- `kubectl apply -f alert-manager-configuration-base.yaml` to add the alert manager configuration
+
+### Debug Alertmanager
+- `kubectl logs alertmanager-monitoring-kube-prometheus-alertmanager-0 -n monitoring -c alertmanager` to check the logs of the Alertmanager pod
 
 ### Debugging after applying Kubernetes changes
 - after applying changes to Kubernetes resources it is a good idea to check the logs of the Prometheus pod
@@ -64,10 +72,34 @@ They can be found in the `alert-rules.yaml` file.
   - `kubectl delete pod cpu-test` to stop the pod
   - check `http://localhost:9093/api/v2/alerts` to see the alerts
 
+## Setup Redis Exporter
+- using the [Helm chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-redis-exporter)
+- `helm repo add prometheus-community https://prometheus-community.github.io/helm-charts`
+- `helm repo update`
+- `helm install redis-exporter prometheus-community/prometheus-redis-exporter -f redis-values.yaml`
+- `kubectl get servicemonitor`, `kubectl get pod`, `helm ls` to check if everything is running
+- port-forward Prometheus UI and check the targets -> should see the redis-exporter target
+
+## Prometheus Rules for Redis
+- rules taken from [awesome-prometheus-alerts](https://samber.github.io/awesome-prometheus-alerts/rules#redis)
+- `kubectl apply -f redis-rules.yaml`
+- check Prometheus UI -> Alerts (might take some minutes to show up)
+
+## Test Redis Rules
+- `kubectl edit deployment redis-cart` and change number of replicas to 0 -> alert will fire
+
+## Create Redis Dashboard in Grafana
+- find a dashboard on grafana.com -> in our case [this one](https://grafana.com/grafana/dashboards/763-redis-dashboard-for-prometheus-redis-exporter-1-x/)
+- Grafana UI - Dashboard - Manage - Import
+
 ## Files
 - this project consists of various .yaml files that are used to deploy the shopping example application. They are quite similar, but only the `config-loadbalancer.yaml` is used to deploy the application.
 - `alert-rules.yaml` contains the alert rules that are added to Prometheus
 - `alert-manager-configuarion.yaml` contains the alert manager configuration
+- `email-secret-template.yaml` use for the email secret
+- `alert-manager-configuration-base.yaml` contains the alert manager configuration -> email needs to be replaced
+- `redis-values.yaml` contains the Redis exporter configuration
+- `redis-rules.yaml` contains the Prometheus rules for Redis
 
 ## Limitations
 Note that to send the email via gmail the following settings need to be set:

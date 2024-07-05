@@ -124,6 +124,10 @@ There are various ways to deploy Prometheus in a Kubernetes cluster:
 - custom dashboards can be created, the Helm chart comes with pre-configured dashboards
 - each panel can be edited -> for example to use PromQL queries
 
+### Add a dashboard
+- [Grafana Dashboards by community](https://grafana.com/grafana/dashboards)
+- in Grafana UI -> Dashboards -> Manage -> Import
+
 ### Users
 - teams and users can be created/deffined in Grafana
 
@@ -159,6 +163,7 @@ summary: Reloading an Alertmanager configuration has failed.
   - description: detailed description of the alert
   - runbook_url: link to a runbook that describes how to handle the alert
   - summary: short description of the alert
+- see [Awesome Prometheus Alerts](https://samber.github.io/awesome-prometheus-alerts/) for examples
 
 ### Add custom alert rules to Prometheus Operator (using Helm Chart)
 - Prometheus operator extends Kubernetes API with custom resources
@@ -191,6 +196,17 @@ route:
   group_interval: 5m # how long to wait before sending a notification
   repeat_interval: 3h # repeat interval for all alerts 
 ```
+
+## Monitor 3rd Party Applications (using Exporters)
+- not on Kubernetes level, but on application level
+- exporter
+  - is a simple application that connects to service (such as redis)
+  1. get metrics from service
+  2. translates to Prometheus format (time series data)
+  3. exposes metrics on HTTP endpoint (f.e. /metrics)
+- ServiceMonitor
+  - custom resource that tells Prometheus to scrape the metrics from the exporter
+  - defines which exporter to use, which metrics to scrape, how often
 
 ## Commands
 - `kubectl port-forward service/monitoring-kube-prometheus-prometheus 9090:9090 -n monitoring &` to access Prometheus UI

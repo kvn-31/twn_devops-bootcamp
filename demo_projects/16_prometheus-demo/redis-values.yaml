@@ -1,0 +1,6 @@
+serviceMonitor:
+  enabled: true
+  labels:
+    release: monitoring # needs to be added so that the ServiceMonitor is picked up by the Prometheus instance
+
+redisAddress: redis://redis-cart:6379 # is not pw protected within the cluster
