@@ -165,3 +165,34 @@ summary: Reloading an Alertmanager configuration has failed.
 - Operator takes our custom resource and tells Prometheus to reload the alerting rules
 - create a Rule, see [documentation](https://docs.openshift.com/container-platform/4.10/rest_api/monitoring_apis/prometheusrule-monitoring-coreos-com-v1.html)
 - check `16_prometheus-demo` for more details
+
+### Alert Manager
+- part of Prometheus ecosystem, separate from alerting rules
+- simplistic UI that can be reached via `kubectl port-forward service/monitoring-kube-prometheus-alertmanager 9093:9093 -n NAMESPACE`
+- receivers: define ways to send alerts (f.e. email, slack, ...)
+- routes: define which alerts should be sent to which receivers
+```yaml
+route:
+  # for any alert 
+  receiver: "null"
+  group_by:
+  - job
+  continue: false
+  # definition for specific alerts
+  routes:
+  - receiver: "slack"
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 12h
+    match:
+      severity: critical
+  # for any alert
+  group_wait: 10s # how long to wait for other alerts to come in
+  group_interval: 5m # how long to wait before sending a notification
+  repeat_interval: 3h # repeat interval for all alerts 
+```
+
+## Commands
+- `kubectl port-forward service/monitoring-kube-prometheus-prometheus 9090:9090 -n monitoring &` to access Prometheus UI
+- `kubectl port-forward service/monitoring-grafana 8080:80 -n NAMESPACE &` to access Grafana UI (default credentials: admin/prom-operator)
+- `kubectl port-forward service/monitoring-kube-prometheus-alertmanager 9093:9093 -n NAMESPACE &` to access Alertmanager UI
