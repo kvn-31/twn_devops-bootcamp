@@ -1,7 +1,14 @@
 # Prometheus Demo
 
 Prometheus will be setup Prometheus in an EKS cluster using a Helm chart. This will automatically deploy Prometheus, Grafana, and other components.
-After this is done the Prometheus UI or Grafana can be used to monitor the Kubernetes cluster and the microservices application.
+
+This project enables logging for:
+- Kubernetes cluster
+- Kubernetes' components (microservices application)
+- Prometheus stack
+- 3rd party components (Redis)
+- monitor own application (simple node.js application)
+
 In addition, alert rules are defined to trigger alerts when certain conditions are met.
 
 Already existing alert rules (navigate to Prometheus UI -> Alerts -> Rules):
@@ -91,6 +98,22 @@ To be able to monitor redis (3rd party) the [redis-exporter](https://github.com/
 ## Create Redis Dashboard in Grafana
 - find a dashboard on grafana.com -> in our case [this one](https://grafana.com/grafana/dashboards/763-redis-dashboard-for-prometheus-redis-exporter-1-x/)
 - Grafana UI - Dashboard - Manage - Import
+
+## Monitor own application (simple node.js application)
+- using prom-client
+- see [nodejs-app-monitoring](./nodejs-app-monitoring/README.md) (run docker build, push to docker hub)
+- in `k8s-config.yaml` replace the image with the correct one
+- to be able to pull from private docker hub registry, a secret needs to be created
+  - `kubectl create secret docker-registry my-registry-key --docker-server=https://index.docker.io/v1/ --docker-username=<username> --docker-password=<password>`
+- `kubectl apply -f k8s-config.yaml` adds Deployment, Service and ServiceMonitor (to tell Prometheus to scrape metrics) to the cluster
+- to check if the Target was added as expected port forward the Prometheus UI and check the Targets (might take some minutes to show up) -> every request to fort-forwarded application (localhost:3000) should add +1 to `http_request_operations_total` metric
+- `kubectl port-forward service/nodeapp 3000:3000` to access the application (http://localhost:3000/metrics for the metrics)
+
+## Add Grafana Dashboard for own application (simple node.js application)
+- go to grafana dashboard - new - new dashboard - add panel - edit - metrics - prometheus - query (code) `rate(http_request_operations_total[2m])` - save
+- go to grafana dashboard - new - new dashboard - add panel - edit - metrics - prometheus - query (code) `rate(http_request_duration_seconds_sum[2m])` - save
+
+![grafana-dashboard.png](assets/grafana-dashboard.png)
 
 ## Files
 - this project consists of various .yaml files that are used to deploy the shopping example application. They are quite similar, but only the `config-loadbalancer.yaml` is used to deploy the application.

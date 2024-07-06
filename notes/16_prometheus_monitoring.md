@@ -208,6 +208,34 @@ route:
   - custom resource that tells Prometheus to scrape the metrics from the exporter
   - defines which exporter to use, which metrics to scrape, how often
 
+## Monitor own Applications using Prometheus Client Libraries
+- client libraries are available for many programming languages
+- abstract the process of exposing metrics
+- libraries implement the Prometheus format (counter, gauge, histogram, ...)
+- normally the developers need to expose the metrics in the application
+  - every metric needs to be defined and tracked in the code
+- assuming under `:3000/metrics` the metrics are exposed, we can use a ServiceMonitor to tell Prometheus to scrape the metrics
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: monitoring-node-app
+  labels:
+    release: monitoring # Helm release name
+    app: nodeapp
+spec:
+  endpoints:
+  - path: /metrics
+    port: service # name of the port in the service (that is excluded in this example)
+    targetPort: 3000
+  namespaceSelector: # needs to be added if the ServiceMonitor is in a different namespace than monitoring stack (prometheus)
+    matchNames:
+    - default
+  selector: # find application by label (in default namespace)
+    matchLabels:
+      app: nodeapp
+```
+
 ## Commands
 - `kubectl port-forward service/monitoring-kube-prometheus-prometheus 9090:9090 -n monitoring &` to access Prometheus UI
 - `kubectl port-forward service/monitoring-grafana 8080:80 -n NAMESPACE &` to access Grafana UI (default credentials: admin/prom-operator)
