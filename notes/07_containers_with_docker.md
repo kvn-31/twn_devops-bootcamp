@@ -65,7 +65,8 @@ Conclusion
 - Docker containers run much faster
 - Docker containers are not compatible with any OS, they only run on Linux, because the Linux Application Layer in a container needs Linux OS Kernel to run
 - Docker Desktop makes it possible to run linux-based containers on Windows and MacOs, by using a hypervisor layer with a lightweight Linux distribution
-
+- virtual machine is more isolated
+- containers share the host os kernel
 
 ## Docker Architecture
 

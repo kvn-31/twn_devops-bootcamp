@@ -11,4 +11,4 @@ This project consists of:
 In this course another [Repository](https://github.com/kvn-31/twn_java-maven-app/tree/build-and-deploy-k8s-ecr) was created. It consists of various different Jenkins pipelines and was used to create a multi-branch pipeline.
 
 ## Course Roadmap
-coming soon
+![course_roadmap.webp](assets/course_roadmap.png)
